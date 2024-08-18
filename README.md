@@ -27,7 +27,7 @@
 5. Move the files `status.html` and `message.txt` to the directory `/home/user/node-status/templates`
 
 6. Edit the file `message.txt` and write anything you want
-7. Open the file `node-status.py` and fill out your configurations
+7. Open the file `node-status.config` and fill out your configurations
    
    RUNNING_ENVIRONMENT = 'umbrel'  - Change to 'umbrel' for Umbrel systems or 'minibolt' for minibolt / raspibolt or any standalone
    
@@ -36,7 +36,7 @@
    UMBREL_PATH = "/path/to/umbrel/scripts/"  - Path to Umbrel app for Umbrel users only
 
 ## Only for Bitcoin Core Running on Another machine
-7. Open the file `node-status.py` and fill out with your Bitcoind credentials
+7. Open the file `node-status.config` and fill out with your Bitcoind credentials
 
    BITCOIN_RPC_USER = 'YOUR_BITCOIN_RPCUSER'
 
