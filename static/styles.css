@@ -1,0 +1,50 @@
+
+body.dark {
+    background-color: #222;
+    color: #eee;
+}
+body.light {
+    background-color: #fff;
+    color: #333;
+}
+.container {
+    margin-top: 50px;
+}
+.green { color: #28a745; } /* Green */
+.yellow { color: #ffc107; } /* Yellow */
+.red { color: #dc3545; } /* Red */
+.list-group-item {
+    background-color: #333;
+    border-color: #555;
+    color: #eee;
+}
+.table {
+    background-color: #333;
+    color: #eee;
+}
+.table th,
+.table td {
+    border-color: #555;
+}
+.theme-switch {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+}
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    .container {
+        margin-top: 20px;
+    }
+    .btn {
+        font-size: 14px; /* Reduce button font size */
+        padding: 8px 12px; /* Reduce button padding */
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-size: 90%; /* Reduce heading sizes */
+    }
+    .table, .list-group-item {
+        font-size: 90%; /* Reduce table and list item font sizes */
+    }
+}
