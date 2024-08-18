@@ -1,3 +1,27 @@
+
+import configparser
+
+# Load configuration from external file
+config = configparser.ConfigParser()
+config.read('node-status.config')
+
+# Configuration settings
+RUNNING_ENVIRONMENT = config.get('settings', 'RUNNING_ENVIRONMENT', fallback='umbrel')
+RUNNING_BITCOIN = config.get('settings', 'RUNNING_BITCOIN', fallback='local')
+
+# Only if you're running Bitcoin Core on another machine
+BITCOIN_RPC_USER = config.get('bitcoin', 'BITCOIN_RPC_USER', fallback='YOUR_BITCOIN_RPCUSER')
+BITCOIN_RPC_PASSWORD = config.get('bitcoin', 'BITCOIN_RPC_PASSWORD', fallback='YOUR_BITCOIN_RPCPASS')
+BITCOIN_RPC_HOST = config.get('bitcoin', 'BITCOIN_RPC_HOST', fallback='YOUR_BITCOIN_MACHINE_IP')
+BITCOIN_RPC_PORT = config.get('bitcoin', 'BITCOIN_RPC_PORT', fallback='8332')
+
+# For Umbrel Users
+UMBREL_PATH = config.get('umbrel', 'UMBREL_PATH', fallback='/path/to/umbrel/scripts/')
+
+# Message to display
+MESSAGE_FILE_PATH = config.get('settings', 'MESSAGE_FILE_PATH', fallback='/home/<user>/node-status/templates/message.txt')
+
+# The rest of your code remains unchanged...
 from flask import Flask, render_template
 import subprocess
 import json
@@ -6,20 +30,6 @@ import psutil
 import cpuinfo
 import sensors
 from collections import defaultdict
-
-# Configuration settings
-RUNNING_ENVIRONMENT = 'umbrel'  # Change to 'umbrel' for Umbrel systems or 'minibolt' for minibolt / raspibolt or any standalone
-RUNNING_BITCOIN = 'local'  # Change to 'external' if you are running Bitcoin Core on another machine
-# Only if your running Bitcoin Core on another machine
-BITCOIN_RPC_USER = 'YOUR_BITCOIN_RPCUSER'
-BITCOIN_RPC_PASSWORD = 'YOUR_BITCOIN_RPCPASS'
-BITCOIN_RPC_HOST = 'YOUR_BITCOIN_MACHINE_IP'
-BITCOIN_RPC_PORT = '8332'
-# for Umbrel Users
-UMBREL_PATH = "/path/to/umbrel/scripts/"  # Path to Umbrel app
-
-# message to display
-MESSAGE_FILE_PATH = '/home/<user>/nr-tools/nodestatus/templates/message.txt'  # Path to the message file
 
 app = Flask(__name__)
 
@@ -46,7 +56,9 @@ def get_bitcoin_info():
         blockchain_info_cmd = bitcoin_cli_base_cmd + ['getblockchaininfo']
         peers_info_cmd = bitcoin_cli_base_cmd + ['getpeerinfo']
         network_info_cmd = bitcoin_cli_base_cmd + ['getnetworkinfo']
+        BITCOIN_RPC_HOST = 'LOCAL - Minibolt'
     else:  # umbrel
+        BITCOIN_RPC_HOST = 'LOCAL - Umbrel'
         blockchain_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getblockchaininfo']
         peers_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getpeerinfo']
         network_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getnetworkinfo']
