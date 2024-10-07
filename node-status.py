@@ -41,12 +41,13 @@ def run_command(command):
 
 def get_bitcoin_info():
     if RUNNING_ENVIRONMENT == 'minibolt' and RUNNING_BITCOIN == 'external':
+        rpc_host = BITCOIN_RPC_HOST  # Use the global configuration
         bitcoin_cli_base_cmd = [
             'bitcoin-cli',
-            '-rpcuser={}'.format(BITCOIN_RPC_USER),
-            '-rpcpassword={}'.format(BITCOIN_RPC_PASSWORD),
-            '-rpcconnect={}'.format(BITCOIN_RPC_HOST),
-            '-rpcport={}'.format(BITCOIN_RPC_PORT)
+            f'-rpcuser={BITCOIN_RPC_USER}',
+            f'-rpcpassword={BITCOIN_RPC_PASSWORD}',
+            f'-rpcconnect={rpc_host}',
+            f'-rpcport={BITCOIN_RPC_PORT}'
         ]
         blockchain_info_cmd = bitcoin_cli_base_cmd + ['getblockchaininfo']
         peers_info_cmd = bitcoin_cli_base_cmd + ['getpeerinfo']
@@ -56,26 +57,36 @@ def get_bitcoin_info():
         blockchain_info_cmd = bitcoin_cli_base_cmd + ['getblockchaininfo']
         peers_info_cmd = bitcoin_cli_base_cmd + ['getpeerinfo']
         network_info_cmd = bitcoin_cli_base_cmd + ['getnetworkinfo']
-        BITCOIN_RPC_HOST = 'LOCAL - Minibolt'
+        rpc_host = 'LOCAL - Minibolt'
     else:  # umbrel
-        BITCOIN_RPC_HOST = 'LOCAL - Umbrel'
-        blockchain_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getblockchaininfo']
-        peers_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getpeerinfo']
-        network_info_cmd = [f"{UMBREL_PATH}app", "compose", "bitcoin", "exec", "bitcoind", "bitcoin-cli", 'getnetworkinfo']
+        rpc_host = 'LOCAL - Umbrel'
+        blockchain_info_cmd = [
+            f"{UMBREL_PATH}app", "compose", "bitcoin", "exec",
+            "bitcoind", "bitcoin-cli", 'getblockchaininfo'
+        ]
+        peers_info_cmd = [
+            f"{UMBREL_PATH}app", "compose", "bitcoin", "exec",
+            "bitcoind", "bitcoin-cli", 'getpeerinfo'
+        ]
+        network_info_cmd = [
+            f"{UMBREL_PATH}app", "compose", "bitcoin", "exec",
+            "bitcoind", "bitcoin-cli", 'getnetworkinfo'
+        ]
 
+    # Execute the commands and parse JSON output
     blockchain_data = json.loads(run_command(blockchain_info_cmd))
     peers_data = json.loads(run_command(peers_info_cmd))
     network_data = json.loads(run_command(network_info_cmd))
 
     return {
-        "sync_percentage": blockchain_data["verificationprogress"] * 100,
-        "current_block_height": blockchain_data["blocks"],
-        "chain": blockchain_data["chain"],
-        "pruned": blockchain_data["pruned"],
+        "sync_percentage": blockchain_data.get("verificationprogress", 0) * 100,
+        "current_block_height": blockchain_data.get("blocks", 0),
+        "chain": blockchain_data.get("chain", "unknown"),
+        "pruned": blockchain_data.get("pruned", False),
         "number_of_peers": len(peers_data),
-        "bitcoind": BITCOIN_RPC_HOST,
-        "version": network_data["version"],
-        "subversion": network_data["subversion"]
+        "bitcoind": rpc_host,  # Use the local variable
+        "version": network_data.get("version", "unknown"),
+        "subversion": network_data.get("subversion", "unknown")
     }
 
 def get_lnd_info():
