@@ -90,7 +90,7 @@ body.light .modal-footer .btn {
     .theme-switch,
     .pay-invoice {
         /* Reduce width by 20% */
-        width: 100px /* 80% of the original width */
+        width: 100px; /* 80% of the original width */
 
         /* Reduce height by 10% */
         padding: 8px 12px; /* Example adjustment for smaller padding */
