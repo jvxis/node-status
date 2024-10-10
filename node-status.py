@@ -1,5 +1,13 @@
 
 import configparser
+from flask import Flask, render_template, request,jsonify
+import subprocess
+import json
+import requests
+import psutil
+import cpuinfo
+import sensors
+from collections import defaultdict
 
 # Load configuration from external file
 config = configparser.ConfigParser()
@@ -20,16 +28,6 @@ UMBREL_PATH = config.get('umbrel', 'UMBREL_PATH', fallback='/path/to/umbrel/scri
 
 # Message to display
 MESSAGE_FILE_PATH = config.get('settings', 'MESSAGE_FILE_PATH', fallback='/home/<user>/node-status/templates/message.txt')
-
-# The rest of your code remains unchanged...
-from flask import Flask, render_template
-import subprocess
-import json
-import requests
-import psutil
-import cpuinfo
-import sensors
-from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -181,7 +179,35 @@ def get_sensor_temperatures():
     finally:
         sensors.cleanup()
     return sensor_temps
+@app.route('/decode-invoice', methods=['POST'])
+def decode_invoice():
+    data = request.get_json()
+    pay_req = data.get('pay_req')
+    if not pay_req:
+        return jsonify({'error': 'Missing payment request'}), 400
 
+    try:
+        result = run_command([f"lncli", "decodepayreq", pay_req])
+        decoded_data = json.loads(result)
+        return jsonify({
+            'amount': decoded_data.get('num_satoshis', 'N/A'),
+            'message': decoded_data.get('description', 'No message')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/pay-invoice', methods=['POST'])
+def pay_invoice():
+    data = request.get_json()
+    pay_req = data.get('pay_req')
+    if not pay_req:
+        return jsonify({'error': 'Missing payment request'}), 400
+
+    try:
+        result = run_command([f"lncli", "payinvoice", '--force', pay_req])
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
 @app.route('/status')
 def status():
     system_info = {

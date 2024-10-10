@@ -77,6 +77,36 @@
 </div>
 
 <button class="theme-switch btn btn-primary">Toggle Theme</button>
+<!-- Payment Button -->
+<button id="pay-button" class="btn btn-primary">Pay Invoice</button>
+
+<!-- Payment Modal -->
+<div id="payment-modal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pay Lightning Invoice</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Enter Lightning Invoice or scan QR Code:</p>
+                <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
+                <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
+                <div id="invoice-details" class="mt-3">
+                    <p><strong>Amount:</strong> <span id="invoice-amount"></span> satoshis</p>
+                    <p><strong>Message:</strong> <span id="invoice-message"></span></p>
+                </div>
+                <div id="loading-spinner" style="display:none;"><p>Loading... <span class="spinner-border"></span></p></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="confirm-payment" class="btn btn-success">Confirm Payment</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
@@ -91,7 +121,63 @@
             body.classList.add('dark');
         }
     });
+    document.getElementById('pay-button').addEventListener('click', () => {
+        $('#payment-modal').modal('show');
+    });
 
+    document.getElementById('qr-code-scan').addEventListener('click', () => {
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            // QR Code scanning functionality to be implemented here
+        } else {
+            alert('QR Code scanning is only available on mobile devices.');
+        }
+    });
+
+    document.getElementById('invoice-input').addEventListener('input', async () => {
+        const invoice = document.getElementById('invoice-input').value;
+        if (invoice) {
+            document.getElementById('loading-spinner').style.display = 'block';
+            try {
+                const response = await fetch('/decode-invoice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pay_req: invoice })
+                });
+                const data = await response.json();
+                document.getElementById('invoice-amount').textContent = data.amount || 'N/A';
+                document.getElementById('invoice-message').textContent = data.message || 'No message';
+            } catch (error) {
+                alert('Failed to decode the invoice. Please check the input.');
+            } finally {
+                document.getElementById('loading-spinner').style.display = 'none';
+            }
+        }
+    });
+
+    document.getElementById('confirm-payment').addEventListener('click', async () => {
+        const invoice = document.getElementById('invoice-input').value;
+        if (invoice) {
+            document.getElementById('loading-spinner').style.display = 'block';
+            try {
+                const response = await fetch('/pay-invoice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pay_req: invoice })
+                });
+                const data = await response.json();
+                alert(data.success ? 'Payment successful!' : 'Payment failed.');
+            } catch (error) {
+                alert('Failed to pay the invoice.');
+            } finally {
+                document.getElementById('loading-spinner').style.display = 'none';
+                $('#payment-modal').modal('hide');
+            }
+        }
+    });
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
