@@ -34,10 +34,15 @@ body.light {
 }
 .pay-invoice {
     position: fixed;
-    top: 50px;
+    top: 70px;
     right: 10px;
     z-index: 9999;
 }
+
+.theme-switch, .pay-invoice {
+    width: 150px; /* Set a fixed width for both buttons */
+}
+
 /* Mobile-specific styles */
 @media (max-width: 768px) {
     .container {

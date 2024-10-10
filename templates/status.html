@@ -5,12 +5,6 @@
     <!-- Refresh page every 1800 seconds (30 minutes) -->
     <meta http-equiv="refresh" content="900">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- Uncomment if you need to implement favicons on your nginx. You need to create a file for this site and a location /static
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> -->
-
     <title>{{ node_alias }} - Status</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -26,92 +20,52 @@
     <div class="alert alert-secondary" role="alert">
         <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵  Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
     </div>
-    <h2 class="mt-4">Bitcoin Core (bitcoind) - {{ bitcoind.bitcoind }}</h2>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <strong>Sync Percentage:</strong>
-            <span class="{% if bitcoind.sync_percentage >= 99.99 %}green{% else %}yellow{% endif %}">
-                {{ '100.00' if bitcoind.sync_percentage >= 99.99 else '%.2f' % bitcoind.sync_percentage }}%
-            </span> | <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} | <strong>Chain:</strong> {{ bitcoind.chain }}</li>
-        <li class="list-group-item"><strong>Current Block Height:</strong> {{ bitcoind.current_block_height }} | <strong>Number of Peers:</strong> {{ bitcoind.number_of_peers }} | <strong>Pruned:</strong> {{ bitcoind.pruned }}</li>
-    </ul>
+    <!-- Your Bitcoin and Lightning Network information will appear here -->
 
-    <h2 class="mt-4">Lightning Network Daemon (lnd)</h2>
-    <ul class="list-group">
-        <li class="list-group-item"><strong>LND Version:</strong> {{ lnd.node_lnd_version }}</li>
-        <li class="list-group-item"><strong>Public Key:</strong> {{ lnd.pub_key }}</li>
-        <li class="list-group-item"><strong>Sync Status:</strong> <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> | <strong>Graph:</strong><span class="{% if lnd.synced_to_graph  %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span></li>
-        <li class="list-group-item"><strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis | <strong>Wallet Balance:</strong> {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis | <strong>Channels Balance:</strong> {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis</li>
-        <li class="list-group-item"><strong>Number of Channels:</strong> {{ lnd.number_of_channels }}</li>
-        <li class="list-group-item"><strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} | <strong>Number of Inactive Channels:</strong> {{ lnd.num_inactive_channels }} | <strong>Number of Pending Channels:</strong> {{ lnd.num_pending_channels }}</li>
-        <li class="list-group-item"><strong>Number of Peers:</strong> {{ lnd.number_of_peers }}</li>
-    </ul>
-    <h2 class="mt-4">System Information</h2>
-    <ul class="list-group">
-        <li class="list-group-item"><strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% | <strong>CPU Temp:</strong> <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
-            {{ system_info.cpu_temp }} °C
-        </span> | <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%</li>
-        <li class="list-group-item"><strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} | Architecture:</strong> {{ system_info.cpu_info['arch'] }}</li>
-    </ul>
-    <h3 class="mt-4">Physical Disks Usage</h3>
-    <ul class="list-group">
-        {% for device, usage in system_info.physical_disks_usage.items() %}
-        <li class="list-group-item">
-            <strong>Device:</strong> {{ device }}, <strong>Total:</strong> {{ (usage.total / (1024**3))|round(2) }} GB, <strong>Used:</strong> {{ (usage.used / (1024**3))|round(2) }} GB, <strong>Free:</strong> {{ (usage.free / (1024**3))|round(2) }} GB, <strong>Usage:</strong> {{ usage.percent|round(1) }}%
-        </li>
-        {% endfor %}
-    </ul>
-    
-    <h3 class="mt-4">Disks Sensor Temperatures</h3>
-    <ul class="list-group">
-        {% for chip, label, temp in system_info.sensor_temperatures %}
-        <li class="list-group-item">
-            <strong>Chip:</strong> {{ chip }}, <strong>Label:</strong> {{ label }},
-            <strong>Temperature:</strong>
-            <span class="{% if temp > 70 %}red{% elif temp > 50 %}yellow{% else %}green{% endif %}">
-                {{ temp }}°C
-            </span>
-        </li>
-        {% endfor %}
-    </ul>
-</div>
+    <!-- Buttons for toggling theme and paying invoice -->
+    <button class="theme-switch btn btn-primary">Toggle Theme</button>
+    <button class="pay-invoice btn btn-primary">Pay Invoice</button>
 
-<button class="theme-switch btn btn-primary">Toggle Theme</button>
-<!-- Payment Button -->
-<button class="pay-invoice btn btn-primary">Pay Invoice</button>
-
-<!-- Payment Modal -->
-<div id="payment-modal" class="modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pay Lightning Invoice</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Enter Lightning Invoice or scan QR Code:</p>
-                <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
-                <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
-                <div id="invoice-details" class="mt-3">
-                    <p><strong>Amount:</strong> <span id="invoice-amount"></span> satoshis</p>
-                    <p><strong>Message:</strong> <span id="invoice-message"></span></p>
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pay Lightning Invoice</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div id="loading-spinner" style="display:none;"><p>Loading... <span class="spinner-border"></span></p></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="confirm-payment" class="btn btn-success">Confirm Payment</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <div class="modal-body">
+                    <p>Enter Lightning Invoice or scan QR Code:</p>
+                    <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
+                    <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
+                    <div id="invoice-details" class="mt-3">
+                        <p><strong>Amount:</strong> <span id="invoice-amount"></span> satoshis</p>
+                        <p><strong>Message:</strong> <span id="invoice-message"></span></p>
+                    </div>
+                    <div id="loading-spinner" style="display:none;">
+                        <p>Loading... <span class="spinner-border"></span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="confirm-payment" class="btn btn-success">Confirm Payment</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- JavaScript dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
     const body = document.querySelector('body');
-    const payInvoice =document.querySelector('.pay-invoice')
+    const payInvoice = document.querySelector('.pay-invoice')
 
     themeSwitch.addEventListener('click', () => {
         if (body.classList.contains('dark')) {
@@ -122,11 +76,10 @@
             body.classList.add('dark');
         }
     });
-    
+
     payInvoice.addEventListener('click', () => {
         $('#payment-modal').modal('show');
     });
-
 
     document.getElementById('invoice-input').addEventListener('input', async () => {
         const invoice = document.getElementById('invoice-input').value;
@@ -173,6 +126,7 @@
             }
         }
     });
+
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
@@ -189,4 +143,3 @@
 
 </body>
 </html>
-
