@@ -229,4 +229,9 @@ def status():
     return render_template('status.html', system_info=system_info, bitcoind=bitcoin_info, lnd=lnd_info, node_alias=lnd_info["node_alias"], message=message, fee_info=fee_info)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, ssl_context=('cert-ns.pem', 'key-ns.pem'))
+    #For self-signed uncomment the line below. This will be need to use the mobile camera
+    
+    #app.run(host='0.0.0.0', port=5000, ssl_context=('cert-ns.pem', 'key-ns.pem'))
+    
+    #!!!Don't forget to comment the line below if you uncomment the line above!!!
+    app.run(host='0.0.0.0', port=5000)
