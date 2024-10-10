@@ -1,6 +1,5 @@
-
 import configparser
-from flask import Flask, render_template, request,jsonify
+from flask import Flask, render_template, request, jsonify
 import subprocess
 import json
 import requests
@@ -82,7 +81,7 @@ def get_bitcoin_info():
         "chain": blockchain_data.get("chain", "unknown"),
         "pruned": blockchain_data.get("pruned", False),
         "number_of_peers": len(peers_data),
-        "bitcoind": rpc_host,  # Use the local variable
+        "bitcoind": rpc_host,
         "version": network_data.get("version", "unknown"),
         "subversion": network_data.get("subversion", "unknown")
     }
@@ -100,7 +99,7 @@ def get_lnd_info():
     node_data = json.loads(run_command(lncli_cmd + ['getinfo']))
 
     return {
-        "wallet_balance": int(wallet_balance_data["total_balance"]),  # Ensure this is an integer
+        "wallet_balance": int(wallet_balance_data["total_balance"]),
         "channel_balance": int(channel_balance_data["balance"]),
         "total_balance": int(wallet_balance_data["total_balance"]) + int(channel_balance_data["balance"]),
         "number_of_channels": len(channels_data["channels"]),
@@ -141,7 +140,7 @@ def get_physical_disks_usage():
     for partition in psutil.disk_partitions(all=False):
         if 'loop' not in partition.device and 'ram' not in partition.device:
             usage = psutil.disk_usage(partition.mountpoint)
-            device = partition.device.split('p')[0]  # Get the base device name, e.g., /dev/nvme0n1
+            device = partition.device.split('p')[0]
             disk_usage[device]['total'] += usage.total
             disk_usage[device]['used'] += usage.used
             disk_usage[device]['free'] += usage.free
@@ -179,6 +178,7 @@ def get_sensor_temperatures():
     finally:
         sensors.cleanup()
     return sensor_temps
+
 @app.route('/decode-invoice', methods=['POST'])
 def decode_invoice():
     data = request.get_json()
@@ -187,7 +187,7 @@ def decode_invoice():
         return jsonify({'error': 'Missing payment request'}), 400
 
     try:
-        result = run_command([f"lncli", "decodepayreq", pay_req])
+        result = run_command(['lncli', 'decodepayreq', pay_req])
         decoded_data = json.loads(result)
         return jsonify({
             'amount': decoded_data.get('num_satoshis', 'N/A'),
@@ -204,10 +204,11 @@ def pay_invoice():
         return jsonify({'error': 'Missing payment request'}), 400
 
     try:
-        result = run_command([f"lncli", "payinvoice", '--force', pay_req])
+        result = run_command(['lncli', 'payinvoice', '--force', pay_req])
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
+
 @app.route('/status')
 def status():
     system_info = {
