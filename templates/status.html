@@ -193,83 +193,86 @@
         }
     });
     // QR code scanning logic
-    document.getElementById('qr-code-scan').addEventListener('click', () => {
-        const qrScannerElement = document.getElementById('qr-code-scanner');
-        const qrCanvas = document.getElementById('qr-canvas');
-        const qrContext = qrCanvas.getContext('2d');
-        const width = 300;
-        const height = 400;
+document.getElementById('qr-code-scan').addEventListener('click', () => {
+    const qrScannerElement = document.getElementById('qr-code-scanner');
+    const qrCanvas = document.getElementById('qr-canvas');
+    const qrContext = qrCanvas.getContext('2d');
+    const width = 300;
+    const height = 400;
 
-        // Set the canvas size
-        qrCanvas.width = width;
-        qrCanvas.height = height;
-        qrScannerElement.style.display = 'block';
+    // Set the canvas size
+    qrCanvas.width = width;
+    qrCanvas.height = height;
+    qrScannerElement.style.display = 'block';
 
-        // Check if the user is on a mobile device
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Attempting to access camera...");
+    // Check if the user is on a mobile device
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        console.log("Mobile device detected. Attempting to access camera...");
 
-            // Camera access and QR code scanning initialization
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then((stream) => {
-                    const videoElement = document.createElement('video');
-                    videoElement.setAttribute('autoplay', '');
-                    videoElement.setAttribute('playsinline', '');
-                    videoElement.style.display = 'none';
-                    document.body.appendChild(videoElement);
-                    videoElement.srcObject = stream;
+        // Camera access and QR code scanning initialization
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then((stream) => {
+                const videoElement = document.createElement('video');
+                videoElement.setAttribute('autoplay', '');
+                videoElement.setAttribute('playsinline', '');
+                videoElement.style.display = 'none';
+                document.body.appendChild(videoElement);
+                videoElement.srcObject = stream;
 
-                    // Read frames from the camera and try to decode QR codes
-                    function scanQR() {
-                        qrContext.drawImage(videoElement, 0, 0, width, height);
-                        const imageData = qrContext.getImageData(0, 0, width, height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    
-                        if (code) {
-                            let scannedData = code.data;
-                    
-                            // Log the raw data exactly as read from the QR code
-                            console.log("Raw QR Code data:", scannedData);
-                    
-                            // Find the position of ':' and remove everything before and including it
-                            const colonIndex = scannedData.indexOf(':');
-                            if (colonIndex !== -1) {
-                                scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
-                            }
-                    
-                            // Convert the final processed data to lowercase
-                            scannedData = scannedData.toLowerCase();
-                    
-                            // Log the data after removing the prefix and converting to lowercase
-                            console.log("Processed QR Code data (lowercase):", scannedData);
-                    
-                            // Set the input field with the final lowercase data
-                            document.getElementById('invoice-input').value = scannedData;
-                    
-                            // Stop the stream and remove the video element after QR scan
-                            stream.getTracks().forEach(track => track.stop());
-                            videoElement.remove();
-                    
-                            // Hide the QR code scanner
-                            qrScannerElement.style.display = 'none';
-                        } else {
-                            requestAnimationFrame(scanQR); // Keep scanning if no code detected
+                // Read frames from the camera and try to decode QR codes
+                function scanQR() {
+                    qrContext.drawImage(videoElement, 0, 0, width, height);
+                    const imageData = qrContext.getImageData(0, 0, width, height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if (code) {
+                        let scannedData = code.data;
+
+                        // Log the raw data exactly as read from the QR code
+                        console.log("Raw QR Code data:", scannedData);
+
+                        // Find the position of ':' and remove everything before and including it
+                        const colonIndex = scannedData.indexOf(':');
+                        if (colonIndex !== -1) {
+                            scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
                         }
-                    }
-                    
-                    
 
-                    // Start scanning
-                    requestAnimationFrame(scanQR);
-                })
-                .catch((err) => {
-                    console.error("Error accessing camera:", err);
-                    alert("Please allow camera access to scan the QR code.");
-                });
-        } else {
-            alert('QR Code scanning is only available on mobile devices.');
-        }
-    });
+                        // Convert the final processed data to lowercase
+                        scannedData = scannedData.toLowerCase();
+
+                        // Log the data after removing the prefix and converting to lowercase
+                        console.log("Processed QR Code data (lowercase):", scannedData);
+
+                        // Set the input field with the final lowercase data
+                        const invoiceInput = document.getElementById('invoice-input');
+                        invoiceInput.value = scannedData;
+
+                        // Trigger the input event on the invoice-input field to automatically decode the invoice
+                        const event = new Event('input', { bubbles: true });
+                        invoiceInput.dispatchEvent(event);
+
+                        // Stop the stream and remove the video element after QR scan
+                        stream.getTracks().forEach(track => track.stop());
+                        videoElement.remove();
+
+                        // Hide the QR code scanner
+                        qrScannerElement.style.display = 'none';
+                    } else {
+                        requestAnimationFrame(scanQR); // Keep scanning if no code detected
+                    }
+                }
+
+                // Start scanning
+                requestAnimationFrame(scanQR);
+            })
+            .catch((err) => {
+                console.error("Error accessing camera:", err);
+                alert("Please allow camera access to scan the QR code.");
+            });
+    } else {
+        alert('QR Code scanning is only available on mobile devices.');
+    }
+});
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
