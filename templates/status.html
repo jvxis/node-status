@@ -124,13 +124,25 @@
         if (body.classList.contains('dark')) {
             body.classList.remove('dark');
             body.classList.add('light');
+            modal.classList.remove('dark');
+            modal.classList.add('light');
         } else {
             body.classList.remove('light');
             body.classList.add('dark');
+            modal.classList.remove('light');
+            modal.classList.add('dark');
         }
     });
 
     payInvoice.addEventListener('click', () => {
+        // Check if the body has the 'dark' class
+        if (body.classList.contains('dark')) {
+            modal.classList.add('dark');
+            modal.classList.remove('light');
+        } else {
+            modal.classList.add('light');
+            modal.classList.remove('dark');
+        }
         $('#payment-modal').modal('show');
     });
 

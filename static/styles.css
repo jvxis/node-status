@@ -43,6 +43,35 @@ body.light {
     width: 150px; /* Set a fixed width for both buttons */
 }
 
+/* Modal in dark mode */
+body.dark .modal-content {
+    background-color: #333; /* Dark background */
+    color: #eee; /* Light text */
+}
+
+/* Modal in light mode */
+body.light .modal-content {
+    background-color: #fff; /* Light background */
+    color: #333; /* Dark text */
+}
+
+/* Customize modal header, footer, and body for both themes */
+.modal-header, .modal-footer {
+    border-color: #555; /* Add border color for better visibility */
+}
+
+/* Modal buttons in dark mode */
+body.dark .modal-footer .btn {
+    background-color: #444; /* Darker button background */
+    color: #eee; /* Light text */
+}
+
+/* Modal buttons in light mode */
+body.light .modal-footer .btn {
+    background-color: #ddd; /* Lighter button background */
+    color: #333; /* Dark text */
+}
+
 /* Mobile-specific styles */
 @media (max-width: 768px) {
     .container {
