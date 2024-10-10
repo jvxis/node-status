@@ -194,50 +194,60 @@
     // QR code scanning logic
     document.getElementById('qr-code-scan').addEventListener('click', () => {
         // Check if the user is on a mobile device
-        if (/Mobi|Android/i.test(navigator.userAgent)) {
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Attempting to access camera...");
+            
             // Show the QR code scanner div
             document.getElementById('qr-code-scanner').style.display = 'block';
-
+    
             // Request camera access
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then((stream) => {
                     // Camera access was granted
-                    console.log("Camera permission granted.");
-
+                    console.log("Camera access granted.");
+    
+                    // Display the video stream to verify the camera feed
+                    const videoElement = document.createElement('video');
+                    videoElement.srcObject = stream;
+                    videoElement.setAttribute('autoplay', '');
+                    videoElement.setAttribute('playsinline', '');
+                    videoElement.style.width = '100%';
+                    videoElement.style.height = 'auto';
+                    document.getElementById('qr-code-scanner').appendChild(videoElement);
+    
+                    // For QR code scanning (if you want to keep it after confirming video feed works)
                     const html5QrCode = new Html5Qrcode("qr-code-scanner");
-
-                    // Start the QR code scanner
+    
                     html5QrCode.start(
-                        { facingMode: "environment" }, // Use back camera
+                        { videoConstraints: { facingMode: "environment" } },
                         {
                             fps: 10,    // Scans per second
                             qrbox: { width: 250, height: 250 } // Define the scanning box size
                         },
                         qrCodeMessage => {
-                            // When a QR code is scanned, update the invoice input with the scanned result
+                            console.log("QR Code scanned:", qrCodeMessage);
                             document.getElementById('invoice-input').value = qrCodeMessage;
-
+    
                             // Stop the QR scanner once the code is scanned
                             html5QrCode.stop().then(() => {
                                 console.log("QR code scanning stopped.");
                             }).catch(err => {
-                                console.error("Unable to stop the QR code scanner", err);
+                                console.error("Unable to stop the QR code scanner:", err);
                             });
-
+    
                             // Hide the QR code scanner
                             document.getElementById('qr-code-scanner').style.display = 'none';
                         },
                         errorMessage => {
-                            // Handle errors (e.g., no QR code found)
                             console.warn("QR Code scan error:", errorMessage);
                         }
                     ).catch(err => {
-                        console.error("Unable to start the QR code scanner", err);
+                        console.error("Unable to start the QR code scanner:", err);
                     });
                 })
                 .catch((err) => {
-                    // Camera access was denied
-                    console.error("Camera permission denied", err);
+                    // Camera access was denied or some other error occurred
+                    console.error("Error accessing camera:", err);
                     alert("Please allow camera access to scan the QR code.");
                 });
         } else {
