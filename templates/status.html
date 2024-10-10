@@ -125,13 +125,6 @@
         $('#payment-modal').modal('show');
     });
 
-    document.getElementById('qr-code-scan').addEventListener('click', () => {
-        if (/Mobi|Android/i.test(navigator.userAgent)) {
-            // QR Code scanning functionality to be implemented here
-        } else {
-            alert('QR Code scanning is only available on mobile devices.');
-        }
-    });
 
     document.getElementById('invoice-input').addEventListener('input', async () => {
         const invoice = document.getElementById('invoice-input').value;
