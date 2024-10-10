@@ -95,8 +95,8 @@
                 <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
 
                 <!-- QR code scanner area (this will be hidden unless on mobile) -->
-                <div id="qr-code-scanner" style="width: 100%; height: 300px; display: none;">
-                    <canvas id="qr-canvas" style="width: 100%; height: 100%;"></canvas>
+                <div id="qr-code-scanner" style="width: 100%; height: 400px; display: none;">
+                    <canvas id="qr-canvas" style="width: 100%; height: 150%;"></canvas>
                 </div>
 
                 <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
@@ -198,7 +198,7 @@
         const qrCanvas = document.getElementById('qr-canvas');
         const qrContext = qrCanvas.getContext('2d');
         const width = 300;
-        const height = 300;
+        const height = 400;
 
         // Set the canvas size
         qrCanvas.width = width;
@@ -224,15 +224,24 @@
                         qrContext.drawImage(videoElement, 0, 0, width, height);
                         const imageData = qrContext.getImageData(0, 0, width, height);
                         const code = jsQR(imageData.data, imageData.width, imageData.height);
-
+                    
                         if (code) {
-                            console.log("QR Code detected: ", code.data);
-                            document.getElementById('invoice-input').value = code.data;
-
+                            let scannedData = code.data;
+                    
+                            // Remove 'LIGHTNING:' prefix if it exists (case-insensitive)
+                            if (scannedData.toUpperCase().startsWith('LIGHTNING:')) {
+                                scannedData = scannedData.substring(10); // Remove the first 10 characters ('LIGHTNING:')
+                            }
+                    
+                            // Set the input field with the correct case (preserved case)
+                            document.getElementById('invoice-input').value = scannedData;
+                    
+                            console.log("QR Code detected: ", scannedData);
+                    
                             // Stop the stream and remove the video element after QR scan
                             stream.getTracks().forEach(track => track.stop());
                             videoElement.remove();
-
+                    
                             // Hide the QR code scanner
                             qrScannerElement.style.display = 'none';
                         } else {
