@@ -237,10 +237,13 @@
                                 scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
                             }
                     
-                            // Log the data after removing the prefix
-                            console.log("Processed QR Code data (after removing prefix):", scannedData);
+                            // Convert the final processed data to lowercase
+                            scannedData = scannedData.toLowerCase();
                     
-                            // Set the input field with the final data (preserving original case)
+                            // Log the data after removing the prefix and converting to lowercase
+                            console.log("Processed QR Code data (lowercase):", scannedData);
+                    
+                            // Set the input field with the final lowercase data
                             document.getElementById('invoice-input').value = scannedData;
                     
                             // Stop the stream and remove the video element after QR scan
@@ -253,6 +256,7 @@
                             requestAnimationFrame(scanQR); // Keep scanning if no code detected
                         }
                     }
+                    
                     
 
                     // Start scanning
