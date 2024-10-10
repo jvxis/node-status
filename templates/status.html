@@ -78,7 +78,7 @@
 
 <button class="theme-switch btn btn-primary">Toggle Theme</button>
 <!-- Payment Button -->
-<button id="pay-button" class="btn btn-primary">Pay Invoice</button>
+<button class="pay-invoice btn btn-primary">Pay Invoice</button>
 
 <!-- Payment Modal -->
 <div id="payment-modal" class="modal" tabindex="-1" role="dialog">
@@ -111,6 +111,7 @@
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
     const body = document.querySelector('body');
+    const payInvoice =document.querySelector('.pay-invoice')
 
     themeSwitch.addEventListener('click', () => {
         if (body.classList.contains('dark')) {
@@ -121,7 +122,8 @@
             body.classList.add('dark');
         }
     });
-    document.getElementById('pay-button').addEventListener('click', () => {
+    
+    payInvoice.addEventListener('click', () => {
         $('#payment-modal').modal('show');
     });
 
