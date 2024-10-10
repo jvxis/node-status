@@ -229,4 +229,4 @@ def status():
     return render_template('status.html', system_info=system_info, bitcoind=bitcoin_info, lnd=lnd_info, node_alias=lnd_info["node_alias"], message=message, fee_info=fee_info)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, ssl_context=('cert-ns.pem', 'key-ns.pem'))
