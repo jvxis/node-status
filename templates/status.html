@@ -120,8 +120,7 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<!-- Include html5-qrcode library -->
-<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
@@ -194,56 +193,53 @@
     // QR code scanning logic
     document.getElementById('qr-code-scan').addEventListener('click', () => {
         const qrScannerElement = document.getElementById('qr-code-scanner');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const qrContext = qrCanvas.getContext('2d');
+        const width = 300;
+        const height = 300;
+
+        // Set the canvas size
+        qrCanvas.width = width;
+        qrCanvas.height = height;
+        qrScannerElement.style.display = 'block';
 
         // Check if the user is on a mobile device
         if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Attempting to access camera...");
 
-            qrScannerElement.style.display = 'block';
-
-            // Video element creation for live stream
-            const videoElement = document.createElement('video');
-            videoElement.setAttribute('autoplay', '');
-            videoElement.setAttribute('playsinline', '');
-            videoElement.style.width = '100%';
-            videoElement.style.height = 'auto';
-            qrScannerElement.appendChild(videoElement);
-
             // Camera access and QR code scanning initialization
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then((stream) => {
-                    // Attach the video stream to the video element
+                    const videoElement = document.createElement('video');
+                    videoElement.setAttribute('autoplay', '');
+                    videoElement.setAttribute('playsinline', '');
+                    videoElement.style.display = 'none';
+                    document.body.appendChild(videoElement);
                     videoElement.srcObject = stream;
 
-                    // Initialize QR code scanner
-                    const html5QrCode = new Html5Qrcode("qr-code-scanner");
+                    // Read frames from the camera and try to decode QR codes
+                    function scanQR() {
+                        qrContext.drawImage(videoElement, 0, 0, width, height);
+                        const imageData = qrContext.getImageData(0, 0, width, height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-                    html5QrCode.start(
-                        { facingMode: "environment" }, // Use the back camera
-                        {
-                            fps: 10,    // Frames per second for scanning
-                            qrbox: { width: 250, height: 250 } // Size of the scanning area
-                        },
-                        qrCodeMessage => {
-                            console.log("QR Code scanned:", qrCodeMessage);
-                            document.getElementById('invoice-input').value = qrCodeMessage;
+                        if (code) {
+                            console.log("QR Code detected: ", code.data);
+                            document.getElementById('invoice-input').value = code.data;
 
-                            // Stop the scanner once the code is scanned
-                            html5QrCode.stop().then(() => {
-                                console.log("QR code scanning stopped.");
-                            }).catch(err => {
-                                console.error("Error stopping QR code scanner:", err);
-                            });
+                            // Stop the stream and remove the video element after QR scan
+                            stream.getTracks().forEach(track => track.stop());
+                            videoElement.remove();
 
                             // Hide the QR code scanner
                             qrScannerElement.style.display = 'none';
-                        },
-                        errorMessage => {
-                            console.warn("QR Code scan error:", errorMessage);
+                        } else {
+                            requestAnimationFrame(scanQR); // Keep scanning
                         }
-                    ).catch(err => {
-                        console.error("Error starting QR code scanner:", err);
-                    });
+                    }
+
+                    // Start scanning
+                    requestAnimationFrame(scanQR);
                 })
                 .catch((err) => {
                     console.error("Error accessing camera:", err);
