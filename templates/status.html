@@ -80,8 +80,8 @@
 <!-- Payment Button -->
 <button class="pay-invoice btn btn-primary">Pay Invoice</button>
 
-<!-- Payment Modal -->
-<div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
+ <!-- Payment Modal -->
+ <div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -193,60 +193,59 @@
     });
     // QR code scanning logic
     document.getElementById('qr-code-scan').addEventListener('click', () => {
+        const qrScannerElement = document.getElementById('qr-code-scanner');
+
         // Check if the user is on a mobile device
         if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Attempting to access camera...");
-            
-            // Show the QR code scanner div
-            document.getElementById('qr-code-scanner').style.display = 'block';
-    
-            // Request camera access
+
+            qrScannerElement.style.display = 'block';
+
+            // Video element creation for live stream
+            const videoElement = document.createElement('video');
+            videoElement.setAttribute('autoplay', '');
+            videoElement.setAttribute('playsinline', '');
+            videoElement.style.width = '100%';
+            videoElement.style.height = 'auto';
+            qrScannerElement.appendChild(videoElement);
+
+            // Camera access and QR code scanning initialization
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then((stream) => {
-                    // Camera access was granted
-                    console.log("Camera access granted.");
-    
-                    // Display the video stream to verify the camera feed
-                    const videoElement = document.createElement('video');
+                    // Attach the video stream to the video element
                     videoElement.srcObject = stream;
-                    videoElement.setAttribute('autoplay', '');
-                    videoElement.setAttribute('playsinline', '');
-                    videoElement.style.width = '100%';
-                    videoElement.style.height = 'auto';
-                    document.getElementById('qr-code-scanner').appendChild(videoElement);
-    
-                    // For QR code scanning (if you want to keep it after confirming video feed works)
+
+                    // Initialize QR code scanner
                     const html5QrCode = new Html5Qrcode("qr-code-scanner");
-    
+
                     html5QrCode.start(
-                        { videoConstraints: { facingMode: "environment" } },
+                        { facingMode: "environment" }, // Use the back camera
                         {
-                            fps: 10,    // Scans per second
-                            qrbox: { width: 250, height: 250 } // Define the scanning box size
+                            fps: 10,    // Frames per second for scanning
+                            qrbox: { width: 250, height: 250 } // Size of the scanning area
                         },
                         qrCodeMessage => {
                             console.log("QR Code scanned:", qrCodeMessage);
                             document.getElementById('invoice-input').value = qrCodeMessage;
-    
-                            // Stop the QR scanner once the code is scanned
+
+                            // Stop the scanner once the code is scanned
                             html5QrCode.stop().then(() => {
                                 console.log("QR code scanning stopped.");
                             }).catch(err => {
-                                console.error("Unable to stop the QR code scanner:", err);
+                                console.error("Error stopping QR code scanner:", err);
                             });
-    
+
                             // Hide the QR code scanner
-                            document.getElementById('qr-code-scanner').style.display = 'none';
+                            qrScannerElement.style.display = 'none';
                         },
                         errorMessage => {
                             console.warn("QR Code scan error:", errorMessage);
                         }
                     ).catch(err => {
-                        console.error("Unable to start the QR code scanner:", err);
+                        console.error("Error starting QR code scanner:", err);
                     });
                 })
                 .catch((err) => {
-                    // Camera access was denied or some other error occurred
                     console.error("Error accessing camera:", err);
                     alert("Please allow camera access to scan the QR code.");
                 });
