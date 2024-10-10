@@ -32,6 +32,12 @@ body.light {
     right: 10px;
     z-index: 9999;
 }
+.pay-button {
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    z-index: 9999;
+}
 /* Mobile-specific styles */
 @media (max-width: 768px) {
     .container {
