@@ -22,7 +22,7 @@
     <div id="coingekko" class="center"><script src="https://widgets.coingecko.com/coingecko-coin-price-marquee-widget.js"></script>
 <coingecko-coin-price-marquee-widget coin-ids="bitcoin,ethereum,dero" currency="usd" background-color="#333333" locale="pt" font-color="#f2f2f2"></coingecko-coin-price-marquee-widget></div>
     <h1 class="mt-5">{{ node_alias }} - Node Status</h1>
-    <div class="alert alert-info" role="alert">{{ message }}</div>
+    <div class="alert alert-info" role="alert">{{ message | safe }}</div>
     <div class="alert alert-secondary" role="alert">
         <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵  Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
     </div>

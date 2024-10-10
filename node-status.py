@@ -7,6 +7,7 @@ import psutil
 import cpuinfo
 import sensors
 from collections import defaultdict
+import markdown
 
 # Load configuration from external file
 config = configparser.ConfigParser()
@@ -118,7 +119,9 @@ def read_message_from_file():
     try:
         with open(MESSAGE_FILE_PATH, 'r') as file:
             message = file.read().strip()
-        return message
+        # Convert the message from Markdown to HTML
+        message_html = markdown.markdown(message)
+        return message_html
     except FileNotFoundError:
         return "No message found."
 
