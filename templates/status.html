@@ -228,18 +228,19 @@
                         if (code) {
                             let scannedData = code.data;
                     
-                            // Log the raw output from jsQR to ensure no transformations are happening
-                            console.log("Raw QR Code data: ", scannedData);
+                            // Log the raw data exactly as read from the QR code
+                            console.log("Raw QR Code data:", scannedData);
                     
-                            // Check for 'LIGHTNING:' prefix and remove it if it exists
-                            if (scannedData.startsWith('LIGHTNING:')) {
-                                scannedData = scannedData.substring(10); // Remove the first 10 characters ('LIGHTNING:')
+                            // Find the position of ':' and remove everything before and including it
+                            const colonIndex = scannedData.indexOf(':');
+                            if (colonIndex !== -1) {
+                                scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
                             }
                     
-                            // Log the data after trimming the prefix
-                            console.log("Processed QR Code data: ", scannedData);
+                            // Log the data after removing the prefix
+                            console.log("Processed QR Code data (after removing prefix):", scannedData);
                     
-                            // Set the input field with the scanned data, preserving the original case
+                            // Set the input field with the final data (preserving original case)
                             document.getElementById('invoice-input').value = scannedData;
                     
                             // Stop the stream and remove the video element after QR scan
@@ -249,9 +250,10 @@
                             // Hide the QR code scanner
                             qrScannerElement.style.display = 'none';
                         } else {
-                            requestAnimationFrame(scanQR); // Keep scanning
+                            requestAnimationFrame(scanQR); // Keep scanning if no code detected
                         }
                     }
+                    
 
                     // Start scanning
                     requestAnimationFrame(scanQR);
