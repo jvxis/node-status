@@ -79,7 +79,6 @@ body.light .modal-footer .btn {
     }
     .btn {
         font-size: 14px; /* Reduce button font size */
-        padding: 8px 12px; /* Reduce button padding */
     }
     h1, h2, h3, h4, h5, h6 {
         font-size: 90%; /* Reduce heading sizes */
@@ -95,8 +94,5 @@ body.light .modal-footer .btn {
         z-index: 9999; /* Ensure they float over other content */
         /* Reduce width by 20% */
         width: 120px; /* 80% of the original width */
-
-        /* Reduce height by 10% */
-        padding: 8px 12px; /* Example adjustment for smaller padding */
     }
 }
