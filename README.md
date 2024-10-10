@@ -13,6 +13,7 @@
    sudo apt-get update
    sudo apt-get install lm-sensors libsensors4-dev
    pip3 install pysensors
+   pip3 install markdown
    ```
 ##Below is for a manual installation without `git clone`
 
