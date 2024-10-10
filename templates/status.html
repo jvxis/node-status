@@ -135,14 +135,6 @@
     });
 
     payInvoice.addEventListener('click', () => {
-        // Check if the body has the 'dark' class
-        if (body.classList.contains('dark')) {
-            modal.classList.add('dark');
-            modal.classList.remove('light');
-        } else {
-            modal.classList.add('light');
-            modal.classList.remove('dark');
-        }
         $('#payment-modal').modal('show');
     });
 
