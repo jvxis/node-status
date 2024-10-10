@@ -54,4 +54,18 @@
    ```bash
    python3 node-status.py
    ```
-10. Now you can access `HTTP://your_machine_ip:5000/status`
+10. Now you can access `http://your_machine_ip:5000/status`
+
+## Use the QR-CODE scan to pay invoice (Chrome and Mobile phones ONLY)
+You need to create a self-signed certificate otherwise the browser will not permit camera access
+
+Inside the node-status folder execute the command:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout key-ns.pem -out cert-ns.pem -days 365 -nodes
+```
+You need to edit the `node-status.py` and in the end of the file
+Follow the instructions to uncomment the https server line.
+
+After doing this you need to access `https://your_machine_ip:5000/status`
+
