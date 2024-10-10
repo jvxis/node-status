@@ -95,7 +95,9 @@
                 <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
 
                 <!-- QR code scanner area (this will be hidden unless on mobile) -->
-                <div id="qr-code-scanner" style="width: 100%; height: 300px; display: none;"></div>
+                <div id="qr-code-scanner" style="width: 100%; height: 300px; display: none;">
+                    <canvas id="qr-canvas" style="width: 100%; height: 100%;"></canvas>
+                </div>
 
                 <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
 
