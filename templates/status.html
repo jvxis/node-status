@@ -93,11 +93,17 @@
             <div class="modal-body">
                 <p>Enter Lightning Invoice or scan QR Code:</p>
                 <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
+
+                <!-- QR code scanner area (this will be hidden unless on mobile) -->
+                <div id="qr-code-scanner" style="width: 100%; height: 300px; display: none;"></div>
+
                 <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
+
                 <div id="invoice-details" class="mt-3">
                     <p><strong>Amount:</strong> <span id="invoice-amount"></span> satoshis</p>
                     <p><strong>Message:</strong> <span id="invoice-message"></span></p>
                 </div>
+
                 <div id="loading-spinner" style="display:none;">
                     <p>Loading... <span class="spinner-border"></span></p>
                 </div>
@@ -114,6 +120,8 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- Include html5-qrcode library -->
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
 
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
@@ -183,7 +191,48 @@
             }
         }
     });
+    // QR code scanning logic
+    document.getElementById('qr-code-scan').addEventListener('click', () => {
+        // Check if the user is on a mobile device
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            // Show the QR code scanner div
+            document.getElementById('qr-code-scanner').style.display = 'block';
 
+            const html5QrCode = new Html5Qrcode("qr-code-scanner");
+
+            // Start the scanner
+            html5QrCode.start(
+                { facingMode: "environment" }, // Use the back camera
+                {
+                    fps: 10,    // Scans per second
+                    qrbox: { width: 250, height: 250 } // Define the scanning box size
+                },
+                qrCodeMessage => {
+                    // When a QR code is scanned, update the invoice input with the scanned result
+                    document.getElementById('invoice-input').value = qrCodeMessage;
+
+                    // Stop the QR scanner once the code is scanned
+                    html5QrCode.stop().then(() => {
+                        console.log("QR code scanning stopped.");
+                    }).catch(err => {
+                        console.error("Unable to stop the QR code scanner", err);
+                    });
+
+                    // Hide the QR code scanner
+                    document.getElementById('qr-code-scanner').style.display = 'none';
+                },
+                errorMessage => {
+                    // Handle errors (e.g., no QR code found)
+                    console.warn("QR Code scan error:", errorMessage);
+                }
+            ).catch(err => {
+                // Handle errors starting the scanner
+                console.error("Unable to start the QR code scanner", err);
+            });
+        } else {
+            alert('QR Code scanning is only available on mobile devices.');
+        }
+    });
     // Function to update the time every second
     function updateTime() {
         const now = new Date();
