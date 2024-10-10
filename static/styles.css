@@ -87,4 +87,12 @@ body.light .modal-footer .btn {
     .table, .list-group-item {
         font-size: 90%; /* Reduce table and list item font sizes */
     }
+    .theme-switch,
+    .pay-invoice {
+        /* Reduce width by 20% */
+        width: 80%; /* 80% of the original width */
+
+        /* Reduce height by 10% */
+        padding: 8px 12px; /* Example adjustment for smaller padding */
+    }
 }
