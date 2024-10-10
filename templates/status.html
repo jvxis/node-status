@@ -14,7 +14,6 @@
     <title>{{ node_alias }} - Status</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    
 </head>
 <body class="dark">
 <div class="container">
@@ -27,47 +26,6 @@
     <div class="alert alert-secondary" role="alert">
         <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵  Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
     </div>
-
-    <h2 class="mt-4">System Information</h2>
-    <ul class="list-group">
-        <li class="list-group-item"><strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% | <strong>CPU Temp:</strong> <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
-            {{ system_info.cpu_temp }} °C
-        </span> | <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%</li>
-        <li class="list-group-item"><strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} | Architecture:</strong> {{ system_info.cpu_info['arch'] }}</li>
-    </ul>
-    <h3 class="mt-4">Physical Disks Usage</h3>
-    <ul class="list-group">
-        {% for device, usage in system_info.physical_disks_usage.items() %}
-        <li class="list-group-item">
-            <strong>Device:</strong> {{ device }}, <strong>Total:</strong> {{ (usage.total / (1024**3))|round(2) }} GB, <strong>Used:</strong> {{ (usage.used / (1024**3))|round(2) }} GB, <strong>Free:</strong> {{ (usage.free / (1024**3))|round(2) }} GB, <strong>Usage:</strong> {{ usage.percent|round(1) }}%
-        </li>
-        {% endfor %}
-    </ul>
-    <h3 class="mt-4">Sensor Temperatures (Composite Labels)</h3>
-    <ul class="list-group">
-        {% for sensor in system_info.temperatures %}
-        <li class="list-group-item">
-            <strong>Sensor:</strong> {{ sensor[0] }}, <strong>Label:</strong> {{ sensor[1] }},
-            <strong>Temperature:</strong>
-            <span class="{% if sensor[2] > 70 %}red{% elif sensor[2] > 50 %}yellow{% else %}green{% endif %}">
-                {{ sensor[2] }}°C
-            </span>
-        </li>
-        {% endfor %}
-    </ul>
-    <h3 class="mt-4">Detailed Sensor Temperatures (Linux, Composite Labels)</h3>
-    <ul class="list-group">
-        {% for chip, label, temp in system_info.sensor_temperatures %}
-        <li class="list-group-item">
-            <strong>Chip:</strong> {{ chip }}, <strong>Label:</strong> {{ label }},
-            <strong>Temperature:</strong>
-            <span class="{% if temp > 70 %}red{% elif temp > 50 %}yellow{% else %}green{% endif %}">
-                {{ temp }}°C
-            </span>
-        </li>
-        {% endfor %}
-    </ul>
-
     <h2 class="mt-4">Bitcoin Core (bitcoind) - {{ bitcoind.bitcoind }}</h2>
     <ul class="list-group">
         <li class="list-group-item">
@@ -88,26 +46,34 @@
         <li class="list-group-item"><strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} | <strong>Number of Inactive Channels:</strong> {{ lnd.num_inactive_channels }} | <strong>Number of Pending Channels:</strong> {{ lnd.num_pending_channels }}</li>
         <li class="list-group-item"><strong>Number of Peers:</strong> {{ lnd.number_of_peers }}</li>
     </ul>
-
-    <h3 class="mt-4">Last 10 Payments</h3>
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Payment Hash</th>
-            <th>Value (Satoshis)</th>
-            <th>Status</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for payment in lnd.last_10_payments %}
-        <tr>
-            <td>{{ payment.payment_hash }}</td>
-            <td>{{ payment.value_sat }}</td>
-            <td>{{ payment.status }}</td>
-        </tr>
+    <h2 class="mt-4">System Information</h2>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% | <strong>CPU Temp:</strong> <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
+            {{ system_info.cpu_temp }} °C
+        </span> | <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%</li>
+        <li class="list-group-item"><strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} | Architecture:</strong> {{ system_info.cpu_info['arch'] }}</li>
+    </ul>
+    <h3 class="mt-4">Physical Disks Usage</h3>
+    <ul class="list-group">
+        {% for device, usage in system_info.physical_disks_usage.items() %}
+        <li class="list-group-item">
+            <strong>Device:</strong> {{ device }}, <strong>Total:</strong> {{ (usage.total / (1024**3))|round(2) }} GB, <strong>Used:</strong> {{ (usage.used / (1024**3))|round(2) }} GB, <strong>Free:</strong> {{ (usage.free / (1024**3))|round(2) }} GB, <strong>Usage:</strong> {{ usage.percent|round(1) }}%
+        </li>
         {% endfor %}
-        </tbody>
-    </table>
+    </ul>
+    
+    <h3 class="mt-4">Disks Sensor Temperatures</h3>
+    <ul class="list-group">
+        {% for chip, label, temp in system_info.sensor_temperatures %}
+        <li class="list-group-item">
+            <strong>Chip:</strong> {{ chip }}, <strong>Label:</strong> {{ label }},
+            <strong>Temperature:</strong>
+            <span class="{% if temp > 70 %}red{% elif temp > 50 %}yellow{% else %}green{% endif %}">
+                {{ temp }}°C
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
 </div>
 
 <button class="theme-switch btn btn-primary">Toggle Theme</button>

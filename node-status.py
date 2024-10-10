@@ -97,7 +97,6 @@ def get_lnd_info():
 
     wallet_balance_data = json.loads(run_command(lncli_cmd + ['walletbalance']))
     channel_balance_data = json.loads(run_command(lncli_cmd + ['channelbalance']))
-    payments_data = json.loads(run_command(lncli_cmd + ['listpayments']))
     channels_data = json.loads(run_command(lncli_cmd + ['listchannels']))
     peers_data = json.loads(run_command(lncli_cmd + ['listpeers']))
     node_data = json.loads(run_command(lncli_cmd + ['getinfo']))
@@ -106,7 +105,6 @@ def get_lnd_info():
         "wallet_balance": int(wallet_balance_data["total_balance"]),  # Ensure this is an integer
         "channel_balance": int(channel_balance_data["balance"]),
         "total_balance": int(wallet_balance_data["total_balance"]) + int(channel_balance_data["balance"]),
-        "last_10_payments": payments_data["payments"][-10:],
         "number_of_channels": len(channels_data["channels"]),
         "number_of_peers": len(peers_data["peers"]),
         "node_alias": node_data["alias"],
@@ -163,18 +161,6 @@ def get_cpu_temp():
                 return entry.current
     return 0
 
-def get_temperatures():
-    temperatures = []
-    try:
-        sensors_temperatures = psutil.sensors_temperatures()
-        for name, entries in sensors_temperatures.items():
-            for entry in entries:
-                if "composite" in entry.label.lower():
-                    temperatures.append((name, entry.label, entry.current))
-    except AttributeError:
-        temperatures.append(("N/A", "N/A", "N/A"))
-    return temperatures
-
 def get_sensor_temperatures():
     sensors.init()
     sensor_temps = []
@@ -204,7 +190,6 @@ def status():
         "cpu_info": get_cpu_info(),
         "cpu_temp": get_cpu_temp(),
         "physical_disks_usage": get_physical_disks_usage(),
-        "temperatures": get_temperatures(),
         "sensor_temperatures": get_sensor_temperatures()
     }
     bitcoin_info = get_bitcoin_info()
