@@ -38,8 +38,15 @@ body.light {
     right: 10px;
     z-index: 9999;
 }
+/* Style for New Invoice Button */
+.new-invoice {
+    position: fixed;
+    top: 130px; /* Positioned below the Pay Invoice button */
+    right: 10px;
+    z-index: 9999;
+}
 
-.theme-switch, .pay-invoice {
+.theme-switch, .pay-invoice, .new-invoice {
     width: 150px; /* Set a fixed width for both buttons */
 }
 
@@ -72,6 +79,30 @@ body.light .modal-footer .btn {
     color: #333; /* Dark text */
 }
 
+/* Center the QR code in the modal */
+#qr-code-invoice {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto; /* Ensures that the QR code is centered */
+    padding: 20px;
+}
+
+/* Optionally, add some spacing */
+.modal-body {
+    text-align: center;
+}
+/* Ensure the payment request text wraps and fits inside the modal */
+#payment-request-container {
+    word-wrap: break-word;      /* Ensures that long words break and wrap to the next line */
+    white-space: normal;        /* Prevents the text from staying on a single line */
+    max-height: 6em;            /* Optional: Limits the container's height */
+    overflow-y: auto;           /* Adds vertical scroll only if content exceeds the height */
+    background-color: #333;     /* Matches the background color */
+    padding: 10px;
+    border-radius: 4px;
+    color: #fff;                /* Ensures the text is readable on dark background */
+}
 /* Mobile-specific styles */
 @media (max-width: 768px) {
     .container {
@@ -87,7 +118,8 @@ body.light .modal-footer .btn {
         font-size: 90%; /* Reduce table and list item font sizes */
     }
     .theme-switch,
-    .pay-invoice {
+    .pay-invoice,
+    .new-invoice {
         /* Ensure they are still floating */
         position: fixed;
         right: 10px; /* Keep the same distance from the right */

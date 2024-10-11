@@ -1,5 +1,5 @@
 import configparser
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for
 import subprocess
 import json
 import requests
@@ -8,6 +8,7 @@ import cpuinfo
 import sensors
 from collections import defaultdict
 import markdown
+
 
 # Load configuration from external file
 config = configparser.ConfigParser()
@@ -211,6 +212,59 @@ def pay_invoice():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
+    
+@app.route('/generate-invoice', methods=['POST'])
+def generate_invoice():
+    data = request.get_json()
+    amount = data.get('amount', 0)
+    message = data.get('message', '')  # Ensure message (memo) is properly captured
+
+    print(f"Received amount: {amount}, memo: {message}")  # Log the received values
+
+    if not amount or int(amount) <= 0:
+        return jsonify({'error': 'Amount must be greater than 0.'}), 400
+
+    try:
+        cmd = ['lncli', 'addinvoice', '--amt', str(amount), '--memo', message, '--expiry', '600']
+        result = json.loads(run_command(cmd))
+
+        return jsonify({
+            'r_hash': result['r_hash'],
+            'payment_request': result['payment_request']
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@app.route('/check-payment', methods=['GET'])
+def check_payment():
+    r_hash = request.args.get('r_hash')
+
+    if not r_hash:
+        return jsonify({'error': 'Missing r_hash'}), 400
+
+    try:
+        # Correct the flag to --rhash
+        cmd = ['lncli', 'lookupinvoice', '--rhash', r_hash]
+        result = json.loads(run_command(cmd))  # Use your existing function to execute the command
+
+        # Log the result for debugging
+        print(f"Lookupinvoice result: {result}")
+
+        # Return the relevant data from the result
+        return jsonify({
+            'settled': result.get('settled', False),
+            'amount': result.get('amt_paid_sat', 0),
+            'message': result.get('memo', '')
+        })
+    except Exception as e:
+        # Log the exception for debugging purposes
+        print(f"Error looking up invoice with r_hash {r_hash}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/status')
 def status():
@@ -227,7 +281,7 @@ def status():
     message = read_message_from_file()
     fee_info = get_fee_info()
     return render_template('status.html', system_info=system_info, bitcoind=bitcoin_info, lnd=lnd_info, node_alias=lnd_info["node_alias"], message=message, fee_info=fee_info)
-
+    
 if __name__ == '__main__':
     #For self-signed uncomment the line below. This will be need to use the mobile camera
     
