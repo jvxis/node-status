@@ -18,10 +18,8 @@
 <div class="container">
     <!-- Display current time -->
     <div id="current-time" class="text-right"></div>
-    <div id="coingekko" class="center">
-        <script src="https://widgets.coingecko.com/coingecko-coin-price-marquee-widget.js"></script>
-        <coingecko-coin-price-marquee-widget coin-ids="bitcoin,ethereum,dero" currency="usd" background-color="#333333" locale="pt" font-color="#f2f2f2"></coingecko-coin-price-marquee-widget>
-    </div>
+    <script src="https://widgets.coingecko.com/gecko-coin-price-marquee-widget.js"></script>
+    <gecko-coin-price-marquee-widget locale="en" outlined="true" coin-ids="bitcoin,ethereum,tether,kaspa,dero" initial-currency="usd"></gecko-coin-price-marquee-widget>
     <h1 class="mt-5">{{ node_alias }} - Node Status</h1>
     <div class="alert alert-info" role="alert">{{ message | safe }}</div>
     <div class="alert alert-secondary" role="alert">
@@ -77,11 +75,14 @@
     </ul>
 </div>
 
+<!-- Theme switch Button -->
 <button class="theme-switch btn btn-primary">Toggle Theme</button>
 <!-- Payment Button -->
 <button class="pay-invoice btn btn-primary">Pay Invoice</button>
 <!-- New Invoice Button -->
 <button class="new-invoice btn btn-primary">New Invoice</button>
+<!-- LND logs Button -->
+<button class="lnd-logs btn btn-primary">LND Logs</button>
 
  <!-- Payment Modal -->
  <div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
@@ -159,6 +160,28 @@
         </div>
     </div>
 </div>
+
+
+<!-- LND Logs Modal -->
+<div id="lnd-logs-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">LND Logs</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="log-output"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="close-log-btn" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 <!-- JavaScript dependencies -->
@@ -464,7 +487,61 @@ async function checkPayment(rHash) {
         }
     }
 }
+    //LND Logs Modal Functions
+    const logOutput = document.getElementById('log-output');
+    let pollInterval = null; // Store the interval for polling
 
+    // Function to fetch the latest logs
+    async function fetchLogs(lines = 20) {
+        try {
+            const response = await fetch(`/get-log?lines=${lines}`);
+            const data = await response.json();
+
+            if (data.logs) {
+                logOutput.textContent += data.logs;  // Append new logs to the existing content
+                logOutput.scrollTop = logOutput.scrollHeight;  // Auto-scroll to the bottom
+            } else if (data.error) {
+                console.error("Error fetching logs:", data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+        }
+    }
+
+    // Function to start polling for logs every 3 seconds
+    function startPollingLogs() {
+        // Fetch the initial logs
+        fetchLogs();
+
+        // Set up polling every 3 seconds
+        pollInterval = setInterval(() => {
+            fetchLogs();
+        }, 3000);
+    }
+
+    // Function to stop polling
+    function stopPollingLogs() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null; // Reset interval
+        }
+    }
+
+    // Open the modal and start polling for logs
+    document.querySelector('.lnd-logs').addEventListener('click', () => {
+        $('#lnd-logs-modal').modal('show');
+        startPollingLogs();  // Start polling when the modal opens
+    });
+
+    // Stop polling when the modal is closed
+    document.getElementById('close-log-btn').addEventListener('click', () => {
+        stopPollingLogs();  // Stop polling when the modal is closed
+    });
+
+    // Also stop polling if the modal is closed using the "X" or by clicking outside
+    $('#lnd-logs-modal').on('hidden.bs.modal', function () {
+        stopPollingLogs();  // Stop polling when modal closes
+    });
 // Function to update the time every second
 function updateTime() {
     const now = new Date();

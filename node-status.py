@@ -1,5 +1,5 @@
 import configparser
-from flask import Flask, render_template, request, jsonify, url_for
+from flask import Flask, render_template, request, jsonify
 import subprocess
 import json
 import requests
@@ -8,6 +8,7 @@ import cpuinfo
 import sensors
 from collections import defaultdict
 import markdown
+import os
 
 
 # Load configuration from external file
@@ -29,6 +30,7 @@ UMBREL_PATH = config.get('umbrel', 'UMBREL_PATH', fallback='/path/to/umbrel/scri
 
 # Message to display
 MESSAGE_FILE_PATH = config.get('settings', 'MESSAGE_FILE_PATH', fallback='/home/<user>/node-status/templates/message.txt')
+
 
 app = Flask(__name__)
 
@@ -183,6 +185,27 @@ def get_sensor_temperatures():
         sensors.cleanup()
     return sensor_temps
 
+
+# Route to fetch the latest lines from the log file
+@app.route('/get-log', methods=['GET'])
+def get_log():
+    log_path = os.path.expanduser("~/.lnd/logs/bitcoin/mainnet/lnd.log")
+    
+    # Check if the log file exists
+    if not os.path.isfile(log_path):
+        return jsonify({"error": "Log file not found"}), 404
+
+    # Get the number of lines to fetch (default to 20)
+    lines = request.args.get('lines', default=20, type=int)
+
+    try:
+        # Fetch the latest N lines from the log file using 'tail'
+        result = subprocess.run(['tail', '-n', str(lines), log_path], capture_output=True, text=True)
+        return jsonify({"logs": result.stdout})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/decode-invoice', methods=['POST'])
 def decode_invoice():
     data = request.get_json()
@@ -281,7 +304,9 @@ def status():
     message = read_message_from_file()
     fee_info = get_fee_info()
     return render_template('status.html', system_info=system_info, bitcoind=bitcoin_info, lnd=lnd_info, node_alias=lnd_info["node_alias"], message=message, fee_info=fee_info)
+
     
+
 if __name__ == '__main__':
     #For self-signed uncomment the line below. This will be need to use the mobile camera
     

@@ -1,11 +1,12 @@
-
 body.dark {
-    background-color: #222;
+    background-color: #2a2a2a; /* Slightly lighter dark mode background for less eye strain */
     color: #eee;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transitions */
 }
 body.light {
     background-color: #fff;
     color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transitions */
 }
 .container {
     margin-top: 50px;
@@ -38,7 +39,6 @@ body.light {
     right: 10px;
     z-index: 9999;
 }
-/* Style for New Invoice Button */
 .new-invoice {
     position: fixed;
     top: 130px; /* Positioned below the Pay Invoice button */
@@ -46,8 +46,27 @@ body.light {
     z-index: 9999;
 }
 
-.theme-switch, .pay-invoice, .new-invoice {
-    width: 150px; /* Set a fixed width for both buttons */
+/* New Style for LND Logs Button */
+.lnd-logs {
+    position: fixed;
+    top: 190px; /* Positioned below the New Invoice button */
+    right: 10px;
+    z-index: 9999;
+}
+
+.theme-switch, .pay-invoice, .new-invoice, .lnd-logs {
+    width: 150px; /* Set a fixed width for buttons */
+    height: 40px; /* Consistent button height */
+}
+
+/* Button hover and active states for better interactivity */
+.theme-switch:hover, .pay-invoice:hover, .new-invoice:hover, .lnd-logs:hover {
+    background-color: #007bff; /* Brighter blue for hover effect */
+    color: #fff; /* White text on hover */
+}
+.theme-switch:focus, .pay-invoice:focus, .new-invoice:focus, .lnd-logs:focus {
+    outline: 2px dashed #007bff; /* Focus outline for accessibility */
+    outline-offset: 3px;
 }
 
 /* Modal in dark mode */
@@ -72,11 +91,17 @@ body.dark .modal-footer .btn {
     background-color: #444; /* Darker button background */
     color: #eee; /* Light text */
 }
+body.dark .modal-footer .btn:hover {
+    background-color: #555; /* Lighter background on hover */
+}
 
 /* Modal buttons in light mode */
 body.light .modal-footer .btn {
     background-color: #ddd; /* Lighter button background */
     color: #333; /* Dark text */
+}
+body.light .modal-footer .btn:hover {
+    background-color: #ccc;
 }
 
 /* Center the QR code in the modal */
@@ -92,6 +117,7 @@ body.light .modal-footer .btn {
 .modal-body {
     text-align: center;
 }
+
 /* Ensure the payment request text wraps and fits inside the modal */
 #payment-request-container {
     word-wrap: break-word;      /* Ensures that long words break and wrap to the next line */
@@ -103,13 +129,41 @@ body.light .modal-footer .btn {
     border-radius: 4px;
     color: #fff;                /* Ensures the text is readable on dark background */
 }
+
+/* Style for the log output area inside the modal */
+#log-output {
+    background-color: #1c1c1c; /* Dark background for logs */
+    color: #d4d4d4; /* Light text for logs */
+    padding: 10px;
+    border-radius: 5px;
+    height: 400px; /* Set a fixed height to control scrolling */
+    font-size: 0.85rem; /* Slightly smaller font for log text */
+    white-space: pre-wrap; /* Preserve formatting but wrap text */
+    overflow-y: auto; /* Enable vertical scrolling for log content */
+    text-align: left; /* Ensure text is left-aligned */
+}
+/* Ensure the log modal content doesn't scroll, but the log-output box does */
+#lnd-logs-modal .modal-body {
+    padding: 0; /* Remove padding to prevent additional scrolling in modal body */
+    text-align: left; /* Ensure modal content is left-aligned */
+    overflow-y: hidden; /* Disable vertical scrolling for the modal body */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* Mobile-specific styles */
 @media (max-width: 768px) {
+    /* Adjust modal margin-top for mobile */
+    .modal-dialog {
+        margin-top: 170px !important; /* Set margin-top for all modals */
+    }
     .container {
         margin-top: 20px;
     }
     .btn {
-        font-size: 14px; /* Reduce button font size */
+        font-size: 10px; /* Reduce button font size */
+        height: 35px; /* Reduce button height */
     }
     h1, h2, h3, h4, h5, h6 {
         font-size: 90%; /* Reduce heading sizes */
@@ -117,14 +171,42 @@ body.light .modal-footer .btn {
     .table, .list-group-item {
         font-size: 90%; /* Reduce table and list item font sizes */
     }
+
+    /* Specific adjustments for floating buttons */
     .theme-switch,
     .pay-invoice,
-    .new-invoice {
-        /* Ensure they are still floating */
+    .new-invoice,
+    .lnd-logs {
         position: fixed;
-        right: 10px; /* Keep the same distance from the right */
-        z-index: 9999; /* Ensure they float over other content */
-        /* Reduce width by 20% */
-        width: 120px; /* 80% of the original width */
+        right: 10px;
+        z-index: 9999;
+        width: 100px; /* Reduce width for mobile */
+        height: 35px; /* Reduce height for mobile */
+        margin-top: 10px; /* Reduce vertical space between buttons */
+        font-size: 10px; /* Smaller text inside the buttons */
+    }
+
+    /* Adjust individual buttons */
+    .pay-invoice {
+        top: 50px; /* Adjusted to maintain consistent spacing */
+    }
+    .new-invoice {
+        top: 90px; /* Adjusted to maintain consistent spacing */
+    }
+    .lnd-logs {
+        top: 130px; /* Adjusted to maintain consistent spacing */
+    }
+}
+
+/* Large screen (desktop) specific styles */
+@media (min-width: 1200px) {
+    .container {
+        margin-top: 70px; /* More margin for large screens */
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-size: 110%; /* Slightly increase heading sizes */
+    }
+    .table, .list-group-item {
+        font-size: 110%; /* Slightly increase font sizes */
     }
 }
