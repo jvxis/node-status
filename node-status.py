@@ -14,8 +14,8 @@ config = configparser.ConfigParser()
 config.read('node-status.config')
 
 # Configuration settings
-RUNNING_ENVIRONMENT = config.get('settings', 'RUNNING_ENVIRONMENT', fallback='umbrel')
-RUNNING_BITCOIN = config.get('settings', 'RUNNING_BITCOIN', fallback='local')
+RUNNING_ENVIRONMENT = config.get('settings', 'RUNNING_ENVIRONMENT', fallback='minibolt')
+RUNNING_BITCOIN = config.get('settings', 'RUNNING_BITCOIN', fallback='external')
 
 # Only if you're running Bitcoin Core on another machine
 BITCOIN_RPC_USER = config.get('bitcoin', 'BITCOIN_RPC_USER', fallback='YOUR_BITCOIN_RPCUSER')
@@ -27,7 +27,7 @@ BITCOIN_RPC_PORT = config.get('bitcoin', 'BITCOIN_RPC_PORT', fallback='8332')
 UMBREL_PATH = config.get('umbrel', 'UMBREL_PATH', fallback='/path/to/umbrel/scripts/')
 
 # Message to display
-MESSAGE_FILE_PATH = config.get('settings', 'MESSAGE_FILE_PATH', fallback='/home/<user>/node-status/templates/message.txt')
+MESSAGE_FILE_PATH = config.get('settings', 'MESSAGE_FILE_PATH', fallback='/home/admin/node-status/templates/message.txt')
 
 app = Flask(__name__)
 
@@ -50,6 +50,7 @@ def get_bitcoin_info():
         blockchain_info_cmd = bitcoin_cli_base_cmd + ['getblockchaininfo']
         peers_info_cmd = bitcoin_cli_base_cmd + ['getpeerinfo']
         network_info_cmd = bitcoin_cli_base_cmd + ['getnetworkinfo']
+        bitcoind_host_display = BITCOIN_RPC_HOST  # Usando o valor do arquivo de configuração
     elif RUNNING_ENVIRONMENT == 'minibolt' and RUNNING_BITCOIN == 'local':
         bitcoin_cli_base_cmd = ['bitcoin-cli']
         blockchain_info_cmd = bitcoin_cli_base_cmd + ['getblockchaininfo']
@@ -86,6 +87,7 @@ def get_bitcoin_info():
         "version": network_data.get("version", "unknown"),
         "subversion": network_data.get("subversion", "unknown")
     }
+
 
 def get_lnd_info():
     if RUNNING_ENVIRONMENT == 'minibolt':
@@ -231,7 +233,7 @@ def status():
 if __name__ == '__main__':
     #For self-signed uncomment the line below. This will be need to use the mobile camera
     
-    #app.run(host='0.0.0.0', port=5000, ssl_context=('cert-ns.pem', 'key-ns.pem'))
+    app.run(host='0.0.0.0', port=5000, ssl_context=('cert-ns.pem', 'key-ns.pem'))
     
     #!!!Don't forget to comment the line below if you uncomment the line above!!!
-    app.run(host='0.0.0.0', port=5000)
+    #app.run(host='0.0.0.0', port=5000)import configparser
