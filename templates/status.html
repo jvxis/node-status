@@ -5,7 +5,6 @@
     <!-- Refresh page every 1800 seconds (30 minutes) -->
     <meta http-equiv="refresh" content="900">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- Uncomment if you need to implement favicons on your nginx. You need to create a file for this site and a location /static -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
@@ -19,12 +18,12 @@
 <div class="container">
     <!-- Display current time -->
     <div id="current-time" class="text-right"></div>
-    <div id="coingekko" class="center"><script src="https://widgets.coingecko.com/coingecko-coin-price-marquee-widget.js"></script>
-<coingecko-coin-price-marquee-widget coin-ids="bitcoin,ethereum,dero" currency="usd" background-color="#333333" locale="pt" font-color="#f2f2f2"></coingecko-coin-price-marquee-widget></div>
+    <script src="https://widgets.coingecko.com/gecko-coin-price-marquee-widget.js"></script>
+    <gecko-coin-price-marquee-widget locale="en" outlined="true" coin-ids="bitcoin,ethereum,tether,kaspa,dero" initial-currency="usd"></gecko-coin-price-marquee-widget>
     <h1 class="mt-5">{{ node_alias }} - Node Status</h1>
     <div class="alert alert-info" role="alert">{{ message | safe }}</div>
     <div class="alert alert-secondary" role="alert">
-        <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵  Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
+        <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵 Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
     </div>
     <h2 class="mt-4">Bitcoin Core (bitcoind) - {{ bitcoind.bitcoind }}</h2>
     <ul class="list-group">
@@ -40,7 +39,7 @@
     <ul class="list-group">
         <li class="list-group-item"><strong>LND Version:</strong> {{ lnd.node_lnd_version }}</li>
         <li class="list-group-item"><strong>Public Key:</strong> {{ lnd.pub_key }}</li>
-        <li class="list-group-item"><strong>Sync Status:</strong> <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> | <strong>Graph:</strong><span class="{% if lnd.synced_to_graph  %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span></li>
+        <li class="list-group-item"><strong>Sync Status:</strong> <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> | <strong>Graph:</strong><span class="{% if lnd.synced_to_graph %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span></li>
         <li class="list-group-item"><strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis | <strong>Wallet Balance:</strong> {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis | <strong>Channels Balance:</strong> {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis</li>
         <li class="list-group-item"><strong>Number of Channels:</strong> {{ lnd.number_of_channels }}</li>
         <li class="list-group-item"><strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} | <strong>Number of Inactive Channels:</strong> {{ lnd.num_inactive_channels }} | <strong>Number of Pending Channels:</strong> {{ lnd.num_pending_channels }}</li>
@@ -76,9 +75,14 @@
     </ul>
 </div>
 
+<!-- Theme switch Button -->
 <button class="theme-switch btn btn-primary">Toggle Theme</button>
 <!-- Payment Button -->
 <button class="pay-invoice btn btn-primary">Pay Invoice</button>
+<!-- New Invoice Button -->
+<button class="new-invoice btn btn-primary">New Invoice</button>
+<!-- LND logs Button -->
+<button class="lnd-logs btn btn-primary">LND Logs</button>
 
  <!-- Payment Modal -->
  <div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
@@ -117,29 +121,91 @@
         </div>
     </div>
 </div>
+<!-- New Invoice Modal -->
+<div id="new-invoice-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Lightning Invoice</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Enter the amount in SATS and an optional message for the invoice:</p>
+                <!-- Update the ID to avoid conflicts -->
+                <input type="number" id="new-invoice-amount" class="form-control" placeholder="Amount in SATS" min="1" required>
+                <input type="text" id="new-invoice-message" class="form-control mt-2" placeholder="Optional Message">
+
+                <div id="loading-invoice" style="display:none;">
+                    <p>Generating invoice... <span class="spinner-border"></span></p>
+                </div>
+
+                <div id="generated-invoice" class="mt-3" style="display:none;">
+                    <p><strong>Payment Request:</strong></p>
+                    <div id="payment-request-container">
+                        <span id="payment-request"></span>
+                        <button id="copy-payment-request" class="btn btn-sm btn-secondary ml-2">Copy</button>
+                    </div>
+                    <br>
+                    <div id="qr-code-invoice"></div> <!-- Centered QR Code -->
+                    <p><strong>Expires in:</strong> <span id="invoice-expiry"></span> minutes <span id="invoice-seconds"></span> seconds</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="confirm-invoice" class="btn btn-success">Generate Invoice</button>
+                <button type="button" id="cancel-invoice-btn" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- LND Logs Modal -->
+<div id="lnd-logs-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">LND Logs</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="log-output"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="close-log-btn" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- JavaScript dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
     const themeSwitch = document.querySelector('.theme-switch');
     const body = document.querySelector('body');
     const payInvoice = document.querySelector('.pay-invoice')
+    const newInvoiceBtn = document.querySelector('.new-invoice');
+    const confirmInvoiceBtn = document.getElementById('confirm-invoice');
+
 
     themeSwitch.addEventListener('click', () => {
         if (body.classList.contains('dark')) {
             body.classList.remove('dark');
             body.classList.add('light');
-            modal.classList.remove('dark');
-            modal.classList.add('light');
         } else {
             body.classList.remove('light');
             body.classList.add('dark');
-            modal.classList.remove('light');
-            modal.classList.add('dark');
         }
     });
 
@@ -192,101 +258,300 @@
             }
         }
     });
+
     // QR code scanning logic
-document.getElementById('qr-code-scan').addEventListener('click', () => {
-    const qrScannerElement = document.getElementById('qr-code-scanner');
-    const qrCanvas = document.getElementById('qr-canvas');
-    const qrContext = qrCanvas.getContext('2d');
-    const width = 300;
-    const height = 400;
+    document.getElementById('qr-code-scan').addEventListener('click', () => {
+        const qrScannerElement = document.getElementById('qr-code-scanner');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const qrContext = qrCanvas.getContext('2d');
+        const width = 300;
+        const height = 400;
 
-    // Set the canvas size
-    qrCanvas.width = width;
-    qrCanvas.height = height;
-    qrScannerElement.style.display = 'block';
+        // Set the canvas size
+        qrCanvas.width = width;
+        qrCanvas.height = height;
+        qrScannerElement.style.display = 'block';
 
-    // Check if the user is on a mobile device
-    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        console.log("Mobile device detected. Attempting to access camera...");
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then((stream) => {
+                    const videoElement = document.createElement('video');
+                    videoElement.setAttribute('autoplay', '');
+                    videoElement.setAttribute('playsinline', '');
+                    videoElement.style.display = 'none';
+                    document.body.appendChild(videoElement);
+                    videoElement.srcObject = stream;
 
-        // Camera access and QR code scanning initialization
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then((stream) => {
-                const videoElement = document.createElement('video');
-                videoElement.setAttribute('autoplay', '');
-                videoElement.setAttribute('playsinline', '');
-                videoElement.style.display = 'none';
-                document.body.appendChild(videoElement);
-                videoElement.srcObject = stream;
+                    function scanQR() {
+                        qrContext.drawImage(videoElement, 0, 0, width, height);
+                        const imageData = qrContext.getImageData(0, 0, width, height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-                // Read frames from the camera and try to decode QR codes
-                function scanQR() {
-                    qrContext.drawImage(videoElement, 0, 0, width, height);
-                    const imageData = qrContext.getImageData(0, 0, width, height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code) {
+                            let scannedData = code.data;
+                            const colonIndex = scannedData.indexOf(':');
+                            if (colonIndex !== -1) {
+                                scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
+                            }
 
-                    if (code) {
-                        let scannedData = code.data;
+                            scannedData = scannedData.toLowerCase();
+                            const invoiceInput = document.getElementById('invoice-input');
+                            invoiceInput.value = scannedData;
 
-                        // Log the raw data exactly as read from the QR code
-                        console.log("Raw QR Code data:", scannedData);
+                            const event = new Event('input', { bubbles: true });
+                            invoiceInput.dispatchEvent(event);
 
-                        // Find the position of ':' and remove everything before and including it
-                        const colonIndex = scannedData.indexOf(':');
-                        if (colonIndex !== -1) {
-                            scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
+                            stream.getTracks().forEach(track => track.stop());
+                            videoElement.remove();
+                            qrScannerElement.style.display = 'none';
+                        } else {
+                            requestAnimationFrame(scanQR); // Keep scanning if no code detected
                         }
-
-                        // Convert the final processed data to lowercase
-                        scannedData = scannedData.toLowerCase();
-
-                        // Log the data after removing the prefix and converting to lowercase
-                        console.log("Processed QR Code data (lowercase):", scannedData);
-
-                        // Set the input field with the final lowercase data
-                        const invoiceInput = document.getElementById('invoice-input');
-                        invoiceInput.value = scannedData;
-
-                        // Trigger the input event on the invoice-input field to automatically decode the invoice
-                        const event = new Event('input', { bubbles: true });
-                        invoiceInput.dispatchEvent(event);
-
-                        // Stop the stream and remove the video element after QR scan
-                        stream.getTracks().forEach(track => track.stop());
-                        videoElement.remove();
-
-                        // Hide the QR code scanner
-                        qrScannerElement.style.display = 'none';
-                    } else {
-                        requestAnimationFrame(scanQR); // Keep scanning if no code detected
                     }
-                }
 
-                // Start scanning
-                requestAnimationFrame(scanQR);
-            })
-            .catch((err) => {
-                console.error("Error accessing camera:", err);
-                alert("Please allow camera access to scan the QR code.");
-            });
-    } else {
-        alert('QR Code scanning is only available on mobile devices.');
+                    requestAnimationFrame(scanQR);
+                })
+                .catch((err) => {
+                    alert("Please allow camera access to scan the QR code.");
+                });
+        } else {
+            alert('QR Code scanning is only available on mobile devices.');
+        }
+    });
+
+// Declare countdownInterval globally
+let countdownInterval = null;
+let paymentCheckInterval = null;
+
+// Function to handle invoice generation
+async function handleInvoiceGeneration() {
+    const amountInputElement = document.getElementById('new-invoice-amount');
+    const amountInput = amountInputElement ? amountInputElement.value : null;
+
+    const message = document.getElementById('new-invoice-message').value || '';
+    console.log("Amount to send:", amountInput, "Message to send:", message);
+
+    if (isNaN(amountInput) || amountInput <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
     }
+
+    const amount = parseInt(amountInput, 10);
+    document.getElementById('loading-invoice').style.display = 'block';
+
+    try {
+        const response = await fetch('/generate-invoice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ amount, message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to generate invoice. Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Generated invoice data:', data);
+
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+        } else {
+            document.getElementById('generated-invoice').style.display = 'block';
+            document.getElementById('payment-request').textContent = data.payment_request;
+            console.log('Payment request for QR code:', data.payment_request);
+            // Use the qr-code-invoice div to generate the QR code
+            const qrCodeContainer = document.getElementById('qr-code-invoice');
+            generateQRCode(qrCodeContainer, data.payment_request);
+
+            startCountdown(600, data.r_hash); // Start the countdown
+        }
+    } catch (error) {
+        alert('Failed to generate the invoice. Check console for more details.');
+    } finally {
+        document.getElementById('loading-invoice').style.display = 'none';
+    }
+}
+
+// Function to reset the modal (clear inputs, stop countdown)
+function resetModal() {
+    console.log('Resetting modal and clearing intervals');
+    // Reset the input fields and hide the generated invoice section
+    document.getElementById('new-invoice-amount').value = ''; 
+    document.getElementById('new-invoice-message').value = ''; 
+    document.getElementById('generated-invoice').style.display = 'none'; 
+
+    // Clear any active countdown or payment checking intervals
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null; // Reset the variable to prevent re-use
+    }
+
+    if (paymentCheckInterval) {
+        clearInterval(paymentCheckInterval);
+        paymentCheckInterval = null; // Reset the variable to prevent re-use
+    }
+}
+
+
+// Add event listener for the "New Invoice" button to open the modal
+newInvoiceBtn.addEventListener('click', () => {
+    $('#new-invoice-modal').modal('show');
 });
-    // Function to update the time every second
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
+
+// Event listener for when the modal is shown
+$('#new-invoice-modal').on('shown.bs.modal', function () {
+    resetModal();  // Reset modal fields and clear intervals
+    confirmInvoiceBtn.removeEventListener('click', handleInvoiceGeneration);
+    confirmInvoiceBtn.addEventListener('click', handleInvoiceGeneration);
+});
+
+// Add event listener for the Cancel button to close the modal and stop any active countdowns or payment checks
+document.querySelector('#cancel-invoice-btn').addEventListener('click', () => {
+    resetModal();  // Reset everything on cancel
+    $('#new-invoice-modal').modal('hide');
+});
+
+document.getElementById('copy-payment-request').addEventListener('click', () => {
+    const paymentRequest = document.getElementById('payment-request').textContent;
+    navigator.clipboard.writeText(paymentRequest).catch(err => {
+        console.error("Failed to copy payment request: ", err);
+    });
+});
+
+// Function to generate a QR code
+function generateQRCode(element, data) {
+    console.log('Generating QR code for payment request:', data);  // Debugging the input
+
+    // Clear any previous QR code from the div
+    element.innerHTML = ''; // Clear existing content
+
+    // Increase QR code size and error correction level
+    new QRCode(element, {
+        text: data,  // Ensure this is the raw payment request without any modifications
+        width: 300,  // Larger size for better readability
+        height: 300,
+        correctLevel: QRCode.CorrectLevel.H  // Higher error correction level for more reliable scanning
+    });
+}
+
+// Countdown and payment check logic
+function startCountdown(seconds, rHash) {
+    let remaining = seconds;
+    let checkInterval = 30;
+
+    document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
+    document.getElementById('invoice-seconds').textContent = remaining % 60;
+
+    countdownInterval = setInterval(() => {
+        remaining -= 1;
+
+        if (remaining <= 0) {
+            clearInterval(countdownInterval); // Stop countdown
+            clearInterval(paymentCheckInterval);  // Stop payment checking
+            alert("Invoice expired. Please generate another one.");
+            $('#new-invoice-modal').modal('hide');
+            return;
+        }
+
+        document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
+        document.getElementById('invoice-seconds').textContent = remaining % 60;
+
+        if (remaining % checkInterval === 0) {
+            checkPayment(rHash);  // Check payment asynchronously
+        }
+    }, 1000); 
+}
+
+// Payment check logic (async function)
+async function checkPayment(rHash) {
+    try {
+        const response = await fetch(`/check-payment?r_hash=${rHash}`);
+        const paymentData = await response.json();
+
+        if (paymentData.settled) {
+            const memo = paymentData.message;
+            alert(`Payment Done! Amount: ${paymentData.amount}, Message: ${memo}`);
+            clearInterval(countdownInterval);  // Stop countdown
+            clearInterval(paymentCheckInterval); // Stop payment check
+            $('#new-invoice-modal').modal('hide');
+        }
+    } catch (error) {
+        console.error("Error checking payment status:", error);
+        if (error.message.includes('unable to locate invoice')) {
+            clearInterval(countdownInterval);  // Stop countdown
+            clearInterval(paymentCheckInterval);
+            alert('Invoice no longer exists. Closing modal.');
+            $('#new-invoice-modal').modal('hide');
+        }
+    }
+}
+    //LND Logs Modal Functions
+    const logOutput = document.getElementById('log-output');
+    let pollInterval = null; // Store the interval for polling
+
+    // Function to fetch the latest logs
+    async function fetchLogs(lines = 20) {
+        try {
+            const response = await fetch(`/get-log?lines=${lines}`);
+            const data = await response.json();
+
+            if (data.logs) {
+                logOutput.textContent += data.logs;  // Append new logs to the existing content
+                logOutput.scrollTop = logOutput.scrollHeight;  // Auto-scroll to the bottom
+            } else if (data.error) {
+                console.error("Error fetching logs:", data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+        }
     }
 
-    // Update the time as soon as the page loads
-    updateTime();
+    // Function to start polling for logs every 3 seconds
+    function startPollingLogs() {
+        // Fetch the initial logs
+        fetchLogs();
 
-    // Set interval to update the time every second (1000 milliseconds)
-    setInterval(updateTime, 1000);
+        // Set up polling every 3 seconds
+        pollInterval = setInterval(() => {
+            fetchLogs();
+        }, 3000);
+    }
+
+    // Function to stop polling
+    function stopPollingLogs() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null; // Reset interval
+        }
+    }
+
+    // Open the modal and start polling for logs
+    document.querySelector('.lnd-logs').addEventListener('click', () => {
+        $('#lnd-logs-modal').modal('show');
+        startPollingLogs();  // Start polling when the modal opens
+    });
+
+    // Stop polling when the modal is closed
+    document.getElementById('close-log-btn').addEventListener('click', () => {
+        stopPollingLogs();  // Stop polling when the modal is closed
+    });
+
+    // Also stop polling if the modal is closed using the "X" or by clicking outside
+    $('#lnd-logs-modal').on('hidden.bs.modal', function () {
+        stopPollingLogs();  // Stop polling when modal closes
+    });
+// Function to update the time every second
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
+}
+
+updateTime();
+setInterval(updateTime, 1000);
 </script>
 
 </body>
 </html>
-
