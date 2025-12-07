@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Refresh page every 1800 seconds (30 minutes) -->
+    <!-- Refresh page every 900 seconds (15 minutes) -->
     <meta http-equiv="refresh" content="900">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -13,59 +13,117 @@
     <title>{{ node_alias }} - Status</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .small-muted{font-size:.9rem;opacity:.8}
+    </style>
 </head>
 <body class="dark">
 <div class="container">
     <!-- Display current time -->
     <div id="current-time" class="text-right"></div>
     <script src="https://widgets.coingecko.com/gecko-coin-price-marquee-widget.js"></script>
-    <gecko-coin-price-marquee-widget locale="en" outlined="true" coin-ids="bitcoin,ethereum,tether,kaspa,dero" initial-currency="usd"></gecko-coin-price-marquee-widget>
+    <gecko-coin-price-marquee-widget locale="en" outlined="true" coin-ids="bitcoin,bitcoin,tether,ethereum" vs-currencies="usd,brl,xau,eur,usd"></gecko-coin-price-marquee-widget>
+
     <h1 class="mt-5">{{ node_alias }} - Node Status</h1>
+
     <div class="alert alert-info" role="alert">{{ message | safe }}</div>
+
+    <!-- Fees + SOURCE -->
     <div class="alert alert-secondary" role="alert">
-        <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> | 🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB | 🛵 Hour Fee: {{ fee_info.hourFee }} sat/vB | 🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB | 🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
+        <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> |
+        🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB |
+        🛵 Hour Fee: {{ fee_info.hourFee }} sat/vB |
+        🚲 Economy Fee: {{ fee_info.economyFee }} sat/vB |
+        🐌 Minimum Fee: {{ fee_info.minimumFee }} sat/vB
+        <div class="small-muted mt-1">
+            🔎 Fonte: {{ fee_info.get('_source','desconhecida') }}
+        </div>
     </div>
+
     <h2 class="mt-4">Bitcoin Core (bitcoind) - {{ bitcoind.bitcoind }}</h2>
     <ul class="list-group">
         <li class="list-group-item">
             <strong>Sync Percentage:</strong>
             <span class="{% if bitcoind.sync_percentage >= 99.99 %}green{% else %}yellow{% endif %}">
                 {{ '100.00' if bitcoind.sync_percentage >= 99.99 else '%.2f' % bitcoind.sync_percentage }}%
-            </span> | <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} | <strong>Chain:</strong> {{ bitcoind.chain }}</li>
-        <li class="list-group-item"><strong>Current Block Height:</strong> {{ bitcoind.current_block_height }} | <strong>Number of Peers:</strong> {{ bitcoind.number_of_peers }} | <strong>Pruned:</strong> {{ bitcoind.pruned }}</li>
+            </span> | <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} | <strong>Chain:</strong> {{ bitcoind.chain }}
+        </li>
+        <li class="list-group-item">
+            <strong>Current Block Height:</strong> {{ bitcoind.current_block_height }} |
+            <strong>Number of Peers:</strong> {{ bitcoind.number_of_peers }} |
+            <strong>Pruned:</strong> {{ bitcoind.pruned }}
+        </li>
     </ul>
 
     <h2 class="mt-4">Lightning Network Daemon (lnd)</h2>
     <ul class="list-group">
         <li class="list-group-item"><strong>LND Version:</strong> {{ lnd.node_lnd_version }}</li>
         <li class="list-group-item"><strong>Public Key:</strong> {{ lnd.pub_key }}</li>
-        <li class="list-group-item"><strong>Sync Status:</strong> <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> | <strong>Graph:</strong><span class="{% if lnd.synced_to_graph %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span></li>
-        <li class="list-group-item"><strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis | <strong>Wallet Balance:</strong> {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis | <strong>Channels Balance:</strong> {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis</li>
+        <li class="list-group-item">
+            <strong>Sync Status:</strong>
+            <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> |
+            <strong>Graph:</strong><span class="{% if lnd.synced_to_graph %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span>
+        </li>
+        <li class="list-group-item">
+            <strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis |
+            <strong>Wallet Balance:</strong> {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis |
+            <strong>Channels Balance:</strong> {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis
+        </li>
         <li class="list-group-item"><strong>Number of Channels:</strong> {{ lnd.number_of_channels }}</li>
-        <li class="list-group-item"><strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} | <strong>Number of Inactive Channels:</strong> {{ lnd.num_inactive_channels }} | <strong>Number of Pending Channels:</strong> {{ lnd.num_pending_channels }}</li>
+        <li class="list-group-item">
+            <strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} |
+            <strong>Number of Inactive Channels:</strong> {{ lnd.num_inactive_channels }} |
+            <strong>Number of Pending Channels:</strong> {{ lnd.num_pending_channels }}
+        </li>
         <li class="list-group-item"><strong>Number of Peers:</strong> {{ lnd.number_of_peers }}</li>
     </ul>
+
+        <h3 class="mt-4 d-flex justify-content-between align-items-center">
+        <span>⚡ Lucro Off-Chain</span>
+        <button id="profit-refresh" class="btn btn-sm btn-outline-light" title="Atualizar lucro">
+            ↻
+        </button>
+    </h3>
+    <ul class="list-group" id="profit-block">
+        <li class="list-group-item">Carregando dados de lucro...</li>
+    </ul>
+
+
     <h2 class="mt-4">System Information</h2>
     <ul class="list-group">
-        <li class="list-group-item"><strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% | <strong>CPU Temp:</strong> <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
-            {{ system_info.cpu_temp }} °C
-        </span> | <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%</li>
-        <li class="list-group-item"><strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} | Architecture:</strong> {{ system_info.cpu_info['arch'] }}</li>
+        <li class="list-group-item">
+            <strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% |
+            <strong>CPU Temp:</strong>
+            <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
+                {{ system_info.cpu_temp }} °C
+            </span> |
+            <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%
+        </li>
+        <li class="list-group-item">
+            <strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} |
+            Architecture:</strong> {{ system_info.cpu_info['arch'] }}
+        </li>
     </ul>
+
     <h3 class="mt-4">Physical Disks Usage</h3>
     <ul class="list-group">
         {% for device, usage in system_info.physical_disks_usage.items() %}
         <li class="list-group-item">
-            <strong>Device:</strong> {{ device }}, <strong>Total:</strong> {{ (usage.total / (1024**3))|round(2) }} GB, <strong>Used:</strong> {{ (usage.used / (1024**3))|round(2) }} GB, <strong>Free:</strong> {{ (usage.free / (1024**3))|round(2) }} GB, <strong>Usage:</strong> {{ usage.percent|round(1) }}%
+            <strong>Device:</strong> {{ device }},
+            <strong>Total:</strong> {{ (usage.total / (1024**3))|round(2) }} GB,
+            <strong>Used:</strong> {{ (usage.used / (1024**3))|round(2) }} GB,
+            <strong>Free:</strong> {{ (usage.free / (1024**3))|round(2) }} GB,
+            <strong>Usage:</strong> {{ usage.percent|round(1) }}%
         </li>
         {% endfor %}
     </ul>
-    
+
     <h3 class="mt-4">Disks Sensor Temperatures</h3>
     <ul class="list-group">
         {% for chip, label, temp in system_info.sensor_temperatures %}
         <li class="list-group-item">
-            <strong>Chip:</strong> {{ chip }}, <strong>Label:</strong> {{ label }},
+            <strong>Chip:</strong> {{ chip }},
+            <strong>Label:</strong> {{ label }},
             <strong>Temperature:</strong>
             <span class="{% if temp > 70 %}red{% elif temp > 50 %}yellow{% else %}green{% endif %}">
                 {{ temp }}°C
@@ -84,8 +142,8 @@
 <!-- LND logs Button -->
 <button class="lnd-logs btn btn-primary">LND Logs</button>
 
- <!-- Payment Modal -->
- <div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
+<!-- Payment Modal -->
+<div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -121,6 +179,7 @@
         </div>
     </div>
 </div>
+
 <!-- New Invoice Modal -->
 <div id="new-invoice-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -133,7 +192,6 @@
             </div>
             <div class="modal-body">
                 <p>Enter the amount in SATS and an optional message for the invoice:</p>
-                <!-- Update the ID to avoid conflicts -->
                 <input type="number" id="new-invoice-amount" class="form-control" placeholder="Amount in SATS" min="1" required>
                 <input type="text" id="new-invoice-message" class="form-control mt-2" placeholder="Optional Message">
 
@@ -148,19 +206,17 @@
                         <button id="copy-payment-request" class="btn btn-sm btn-secondary ml-2">Copy</button>
                     </div>
                     <br>
-                    <div id="qr-code-invoice"></div> <!-- Centered QR Code -->
+                    <div id="qr-code-invoice"></div>
                     <p><strong>Expires in:</strong> <span id="invoice-expiry"></span> minutes <span id="invoice-seconds"></span> seconds</p>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" id="confirm-invoice" class="btn btn-success">Generate Invoice</button>
                 <button type="button" id="cancel-invoice-btn" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-
             </div>
         </div>
     </div>
 </div>
-
 
 <!-- LND Logs Modal -->
 <div id="lnd-logs-modal" class="modal fade" tabindex="-1" role="dialog">
@@ -182,8 +238,6 @@
     </div>
 </div>
 
-
-
 <!-- JavaScript dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
@@ -197,7 +251,6 @@
     const payInvoice = document.querySelector('.pay-invoice')
     const newInvoiceBtn = document.querySelector('.new-invoice');
     const confirmInvoiceBtn = document.getElementById('confirm-invoice');
-
 
     themeSwitch.addEventListener('click', () => {
         if (body.classList.contains('dark')) {
@@ -220,9 +273,7 @@
             try {
                 const response = await fetch('/decode-invoice', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pay_req: invoice })
                 });
                 const data = await response.json();
@@ -243,9 +294,7 @@
             try {
                 const response = await fetch('/pay-invoice', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pay_req: invoice })
                 });
                 const data = await response.json();
@@ -267,7 +316,6 @@
         const width = 300;
         const height = 400;
 
-        // Set the canvas size
         qrCanvas.width = width;
         qrCanvas.height = height;
         qrScannerElement.style.display = 'block';
@@ -291,215 +339,164 @@
                             let scannedData = code.data;
                             const colonIndex = scannedData.indexOf(':');
                             if (colonIndex !== -1) {
-                                scannedData = scannedData.substring(colonIndex + 1); // Remove everything before and including ':'
+                                scannedData = scannedData.substring(colonIndex + 1);
                             }
-
                             scannedData = scannedData.toLowerCase();
                             const invoiceInput = document.getElementById('invoice-input');
                             invoiceInput.value = scannedData;
-
                             const event = new Event('input', { bubbles: true });
                             invoiceInput.dispatchEvent(event);
-
                             stream.getTracks().forEach(track => track.stop());
                             videoElement.remove();
                             qrScannerElement.style.display = 'none';
                         } else {
-                            requestAnimationFrame(scanQR); // Keep scanning if no code detected
+                            requestAnimationFrame(scanQR);
                         }
                     }
-
                     requestAnimationFrame(scanQR);
                 })
-                .catch((err) => {
-                    alert("Please allow camera access to scan the QR code.");
-                });
+                .catch(() => { alert("Please allow camera access to scan the QR code."); });
         } else {
             alert('QR Code scanning is only available on mobile devices.');
         }
     });
 
-// Declare countdownInterval globally
-let countdownInterval = null;
-let paymentCheckInterval = null;
+    // ------- New Invoice / Countdown -------`
+    let countdownInterval = null;
+    let paymentCheckInterval = null;
 
-// Function to handle invoice generation
-async function handleInvoiceGeneration() {
-    const amountInputElement = document.getElementById('new-invoice-amount');
-    const amountInput = amountInputElement ? amountInputElement.value : null;
+    async function handleInvoiceGeneration() {
+        const amountInputElement = document.getElementById('new-invoice-amount');
+        const amountInput = amountInputElement ? amountInputElement.value : null;
 
-    const message = document.getElementById('new-invoice-message').value || '';
-    console.log("Amount to send:", amountInput, "Message to send:", message);
-
-    if (isNaN(amountInput) || amountInput <= 0) {
-        alert("Please enter a valid amount greater than 0.");
-        return;
-    }
-
-    const amount = parseInt(amountInput, 10);
-    document.getElementById('loading-invoice').style.display = 'block';
-
-    try {
-        const response = await fetch('/generate-invoice', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ amount, message })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to generate invoice. Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Generated invoice data:', data);
-
-        if (data.error) {
-            alert(`Error: ${data.error}`);
-        } else {
-            document.getElementById('generated-invoice').style.display = 'block';
-            document.getElementById('payment-request').textContent = data.payment_request;
-            console.log('Payment request for QR code:', data.payment_request);
-            // Use the qr-code-invoice div to generate the QR code
-            const qrCodeContainer = document.getElementById('qr-code-invoice');
-            generateQRCode(qrCodeContainer, data.payment_request);
-
-            startCountdown(600, data.r_hash); // Start the countdown
-        }
-    } catch (error) {
-        alert('Failed to generate the invoice. Check console for more details.');
-    } finally {
-        document.getElementById('loading-invoice').style.display = 'none';
-    }
-}
-
-// Function to reset the modal (clear inputs, stop countdown)
-function resetModal() {
-    console.log('Resetting modal and clearing intervals');
-    // Reset the input fields and hide the generated invoice section
-    document.getElementById('new-invoice-amount').value = ''; 
-    document.getElementById('new-invoice-message').value = ''; 
-    document.getElementById('generated-invoice').style.display = 'none'; 
-
-    // Clear any active countdown or payment checking intervals
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null; // Reset the variable to prevent re-use
-    }
-
-    if (paymentCheckInterval) {
-        clearInterval(paymentCheckInterval);
-        paymentCheckInterval = null; // Reset the variable to prevent re-use
-    }
-}
-
-
-// Add event listener for the "New Invoice" button to open the modal
-newInvoiceBtn.addEventListener('click', () => {
-    $('#new-invoice-modal').modal('show');
-});
-
-// Event listener for when the modal is shown
-$('#new-invoice-modal').on('shown.bs.modal', function () {
-    resetModal();  // Reset modal fields and clear intervals
-    confirmInvoiceBtn.removeEventListener('click', handleInvoiceGeneration);
-    confirmInvoiceBtn.addEventListener('click', handleInvoiceGeneration);
-});
-
-// Add event listener for the Cancel button to close the modal and stop any active countdowns or payment checks
-document.querySelector('#cancel-invoice-btn').addEventListener('click', () => {
-    resetModal();  // Reset everything on cancel
-    $('#new-invoice-modal').modal('hide');
-});
-
-document.getElementById('copy-payment-request').addEventListener('click', () => {
-    const paymentRequest = document.getElementById('payment-request').textContent;
-    navigator.clipboard.writeText(paymentRequest).catch(err => {
-        console.error("Failed to copy payment request: ", err);
-    });
-});
-
-// Function to generate a QR code
-function generateQRCode(element, data) {
-    console.log('Generating QR code for payment request:', data);  // Debugging the input
-
-    // Clear any previous QR code from the div
-    element.innerHTML = ''; // Clear existing content
-
-    // Increase QR code size and error correction level
-    new QRCode(element, {
-        text: data,  // Ensure this is the raw payment request without any modifications
-        width: 300,  // Larger size for better readability
-        height: 300,
-        correctLevel: QRCode.CorrectLevel.H  // Higher error correction level for more reliable scanning
-    });
-}
-
-// Countdown and payment check logic
-function startCountdown(seconds, rHash) {
-    let remaining = seconds;
-    let checkInterval = 30;
-
-    document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
-    document.getElementById('invoice-seconds').textContent = remaining % 60;
-
-    countdownInterval = setInterval(() => {
-        remaining -= 1;
-
-        if (remaining <= 0) {
-            clearInterval(countdownInterval); // Stop countdown
-            clearInterval(paymentCheckInterval);  // Stop payment checking
-            alert("Invoice expired. Please generate another one.");
-            $('#new-invoice-modal').modal('hide');
+        const message = document.getElementById('new-invoice-message').value || '';
+        if (isNaN(amountInput) || amountInput <= 0) {
+            alert("Please enter a valid amount greater than 0.");
             return;
         }
+
+        const amount = parseInt(amountInput, 10);
+        document.getElementById('loading-invoice').style.display = 'block';
+
+        try {
+            const response = await fetch('/generate-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, message })
+            });
+
+            if (!response.ok) throw new Error(`Failed to generate invoice. Status: ${response.status}`);
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert(`Error: ${data.error}`);
+            } else {
+                document.getElementById('generated-invoice').style.display = 'block';
+                document.getElementById('payment-request').textContent = data.payment_request;
+                const qrCodeContainer = document.getElementById('qr-code-invoice');
+                generateQRCode(qrCodeContainer, data.payment_request);
+                startCountdown(600, data.r_hash);
+            }
+        } catch (error) {
+            alert('Failed to generate the invoice. Check console for more details.');
+        } finally {
+            document.getElementById('loading-invoice').style.display = 'none';
+        }
+    }
+
+    function resetModal() {
+        document.getElementById('new-invoice-amount').value = '';
+        document.getElementById('new-invoice-message').value = '';
+        document.getElementById('generated-invoice').style.display = 'none';
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        if (paymentCheckInterval) { clearInterval(paymentCheckInterval); paymentCheckInterval = null; }
+    }
+
+    newInvoiceBtn.addEventListener('click', () => { $('#new-invoice-modal').modal('show'); });
+
+    $('#new-invoice-modal').on('shown.bs.modal', function () {
+        resetModal();
+        confirmInvoiceBtn.removeEventListener('click', handleInvoiceGeneration);
+        confirmInvoiceBtn.addEventListener('click', handleInvoiceGeneration);
+    });
+
+    document.querySelector('#cancel-invoice-btn').addEventListener('click', () => {
+        resetModal();
+        $('#new-invoice-modal').modal('hide');
+    });
+
+    document.getElementById('copy-payment-request').addEventListener('click', () => {
+        const paymentRequest = document.getElementById('payment-request').textContent;
+        navigator.clipboard.writeText(paymentRequest).catch(err => { console.error("Failed to copy payment request: ", err); });
+    });
+
+    function generateQRCode(element, data) {
+        element.innerHTML = '';
+        new QRCode(element, {
+            text: data,
+            width: 300,
+            height: 300,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+
+    function startCountdown(seconds, rHash) {
+        let remaining = seconds;
+        let checkInterval = 30;
 
         document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
         document.getElementById('invoice-seconds').textContent = remaining % 60;
 
-        if (remaining % checkInterval === 0) {
-            checkPayment(rHash);  // Check payment asynchronously
-        }
-    }, 1000); 
-}
+        countdownInterval = setInterval(() => {
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                clearInterval(paymentCheckInterval);
+                alert("Invoice expired. Please generate another one.");
+                $('#new-invoice-modal').modal('hide');
+                return;
+            }
+            document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
+            document.getElementById('invoice-seconds').textContent = remaining % 60;
 
-// Payment check logic (async function)
-async function checkPayment(rHash) {
-    try {
-        const response = await fetch(`/check-payment?r_hash=${rHash}`);
-        const paymentData = await response.json();
+            if (remaining % checkInterval === 0) { checkPayment(rHash); }
+        }, 1000);
+    }
 
-        if (paymentData.settled) {
-            const memo = paymentData.message;
-            alert(`Payment Done! Amount: ${paymentData.amount}, Message: ${memo}`);
-            clearInterval(countdownInterval);  // Stop countdown
-            clearInterval(paymentCheckInterval); // Stop payment check
-            $('#new-invoice-modal').modal('hide');
-        }
-    } catch (error) {
-        console.error("Error checking payment status:", error);
-        if (error.message.includes('unable to locate invoice')) {
-            clearInterval(countdownInterval);  // Stop countdown
-            clearInterval(paymentCheckInterval);
-            alert('Invoice no longer exists. Closing modal.');
-            $('#new-invoice-modal').modal('hide');
+    async function checkPayment(rHash) {
+        try {
+            const response = await fetch(`/check-payment?r_hash=${rHash}`);
+            const paymentData = await response.json();
+            if (paymentData.settled) {
+                const memo = paymentData.message;
+                alert(`Payment Done! Amount: ${paymentData.amount}, Message: ${memo}`);
+                clearInterval(countdownInterval);
+                clearInterval(paymentCheckInterval);
+                $('#new-invoice-modal').modal('hide');
+            }
+        } catch (error) {
+            console.error("Error checking payment status:", error);
+            if (error.message && error.message.includes('unable to locate invoice')) {
+                clearInterval(countdownInterval);
+                clearInterval(paymentCheckInterval);
+                alert('Invoice no longer exists. Closing modal.');
+                $('#new-invoice-modal').modal('hide');
+            }
         }
     }
-}
-    //LND Logs Modal Functions
-    const logOutput = document.getElementById('log-output');
-    let pollInterval = null; // Store the interval for polling
 
-    // Function to fetch the latest logs
+    // LND Logs polling
+    const logOutput = document.getElementById('log-output');
+    let pollInterval = null;
+
     async function fetchLogs(lines = 20) {
         try {
             const response = await fetch(`/get-log?lines=${lines}`);
             const data = await response.json();
-
             if (data.logs) {
-                logOutput.textContent += data.logs;  // Append new logs to the existing content
-                logOutput.scrollTop = logOutput.scrollHeight;  // Auto-scroll to the bottom
+                logOutput.textContent += data.logs;
+                logOutput.scrollTop = logOutput.scrollHeight;
             } else if (data.error) {
                 console.error("Error fetching logs:", data.error);
             }
@@ -508,49 +505,138 @@ async function checkPayment(rHash) {
         }
     }
 
-    // Function to start polling for logs every 3 seconds
     function startPollingLogs() {
-        // Fetch the initial logs
         fetchLogs();
-
-        // Set up polling every 3 seconds
-        pollInterval = setInterval(() => {
-            fetchLogs();
-        }, 3000);
+        pollInterval = setInterval(() => { fetchLogs(); }, 3000);
     }
 
-    // Function to stop polling
     function stopPollingLogs() {
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null; // Reset interval
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    document.querySelector('.lnd-logs').addEventListener('click', () => {
+        $('#lnd-logs-modal').modal('show');
+        startPollingLogs();
+    });
+
+    document.getElementById('close-log-btn').addEventListener('click', () => { stopPollingLogs(); });
+    $('#lnd-logs-modal').on('hidden.bs.modal', function () { stopPollingLogs(); });
+
+    // ------- Lucro Off-Chain (AJAX + refresh) -------
+    async function loadProfit() {
+        const block = document.getElementById('profit-block');
+        if (!block) return;
+
+        try {
+            const resp = await fetch('/profit');
+            const data = await resp.json();
+            const last = data.last_day || null;
+            const monthly = data.monthly || [];
+            const ytd = data.year_to_date || 0;
+
+            function fmt(n) {
+                if (typeof n !== 'number') return n;
+                return n.toLocaleString('pt-BR'); // separador de milhar estilo BR
+            }
+
+            // indexa meses por "YYYY-MM"
+            const byMonth = {};
+            monthly.forEach(m => {
+                if (m && m.month) {
+                    byMonth[m.month] = m;
+                }
+            });
+
+            const now = new Date();
+            const ymCurrent = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const ymPrev = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+            let html = '';
+
+            // ----- Bloco diário -----
+            if (last) {
+                let d = last.date;
+                let dbr = d;
+                if (d && d.length === 10) {
+                    // de YYYY-MM-DD para DD/MM/YYYY
+                    dbr = d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4);
+                }
+                const cls = last.profit >= 0 ? 'text-success' : 'text-danger';
+                html += `<li class="list-group-item"><strong>Ontem (${dbr}):</strong> <span class="${cls}">${fmt(last.profit)} sats</span></li>`;
+                html += `<li class="list-group-item">Fees encaminhamento: ${fmt(last.forwards)} sats</li>`;
+                html += `<li class="list-group-item">Custo de rebalance: ${fmt(last.rebalances)} sats</li>`;
+            } else {
+                html += `<li class="list-group-item">Nenhum dado diário disponível.</li>`;
+            }
+
+            // ----- Comparativo mensal (mês atual x mês anterior) -----
+            const curMonthData  = byMonth[ymCurrent];
+            const prevMonthData = byMonth[ymPrev];
+
+            if (curMonthData || prevMonthData) {
+                html += `<li class="list-group-item"><strong>Comparativo mensal:</strong></li>`;
+
+                if (curMonthData) {
+                    const cls = curMonthData.profit >= 0 ? 'text-success' : 'text-danger';
+                    html += `<li class="list-group-item pl-4">Mês atual (${ymCurrent}): <span class="${cls}">${fmt(curMonthData.profit)} sats</span> (fees=${fmt(curMonthData.forwards)}, rebalance=${fmt(curMonthData.rebalances)})</li>`;
+                } else {
+                    html += `<li class="list-group-item pl-4">Mês atual: sem dados.</li>`;
+                }
+
+                if (prevMonthData) {
+                    const cls = prevMonthData.profit >= 0 ? 'text-success' : 'text-danger';
+                    html += `<li class="list-group-item pl-4">Mês anterior (${ymPrev}): <span class="${cls}">${fmt(prevMonthData.profit)} sats</span> (fees=${fmt(prevMonthData.forwards)}, rebalance=${fmt(prevMonthData.rebalances)})</li>`;
+                } else {
+                    html += `<li class="list-group-item pl-4">Mês anterior: sem dados.</li>`;
+                }
+            }
+
+            // ----- Resumo últimos meses (sem repetir atual/anterior) -----
+            const last3 = monthly
+                .filter(m => m && m.month !== ymCurrent && m.month !== ymPrev)
+                .slice(-3);
+
+            if (last3.length > 0) {
+                html += `<li class="list-group-item"><strong>Resumo últimos meses (exceto atual/anterior):</strong></li>`;
+                last3.forEach(m => {
+                    const cls = m.profit >= 0 ? 'text-success' : 'text-danger';
+                    html += `<li class="list-group-item pl-4">• ${m.month}: <span class="${cls}">${fmt(m.profit)} sats</span> (fees=${fmt(m.forwards)}, rebalance=${fmt(m.rebalances)})</li>`;
+                });
+            }
+
+            // ----- YTD -----
+            html += `<li class="list-group-item"><strong>Lucro acumulado no ano (YTD):</strong> ${fmt(ytd)} sats</li>`;
+
+            block.innerHTML = html;
+
+        } catch (e) {
+            console.error('Erro ao carregar lucro off-chain:', e);
+            block.innerHTML = `<li class="list-group-item text-danger">Erro ao carregar lucro off-chain.</li>`;
         }
     }
 
-    // Open the modal and start polling for logs
-    document.querySelector('.lnd-logs').addEventListener('click', () => {
-        $('#lnd-logs-modal').modal('show');
-        startPollingLogs();  // Start polling when the modal opens
-    });
+    const profitRefreshBtn = document.getElementById('profit-refresh');
+    if (profitRefreshBtn) {
+        profitRefreshBtn.addEventListener('click', () => {
+            profitRefreshBtn.disabled = true;
+            loadProfit().finally(() => {
+                profitRefreshBtn.disabled = false;
+            });
+        });
+    }
+    // carrega uma vez ao abrir a página
+    loadProfit();
 
-    // Stop polling when the modal is closed
-    document.getElementById('close-log-btn').addEventListener('click', () => {
-        stopPollingLogs();  // Stop polling when the modal is closed
-    });
 
-    // Also stop polling if the modal is closed using the "X" or by clicking outside
-    $('#lnd-logs-modal').on('hidden.bs.modal', function () {
-        stopPollingLogs();  // Stop polling when modal closes
-    });
-// Function to update the time every second
-function updateTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
-}
-
-updateTime();
-setInterval(updateTime, 1000);
+    // Clock
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
 </script>
 
 </body>
