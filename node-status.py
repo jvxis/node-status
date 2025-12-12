@@ -1,3 +1,6 @@
+import sqlite3
+from datetime import datetime
+import time
 import configparser
 from flask import Flask, render_template, request, jsonify
 import subprocess
@@ -10,8 +13,9 @@ from collections import defaultdict
 import markdown
 import os
 import shutil
-from profit import get_profit_last_day, get_profit_month_summary, get_profit_year_to_date
-from flask import jsonify
+
+# para usar o viewer do lnd_fees.sqlite (jvx)
+from lnd_fees_view import fetch_daily_latest, fetch_month_summary, fetch_ytd
 
 # -----------------------------
 # Config
@@ -319,6 +323,135 @@ def get_lnd_info():
         }
 
 # -----------------------------
+# Top peers (via lncli fwdinghistory)
+# -----------------------------
+def get_top_forwarding_peers(days=30, limit=5):
+    """
+    Calcula top/bottom peers por fees recebidas nos últimos `days` dias.
+    Usa somente forwardinghistory do LND (não inclui custo de rebalances).
+
+    Agrupamento por peer_alias_out (alias do peer de saída).
+    Isso evita depender de listchannels/scid e funciona mesmo com canais fechados.
+
+    Retorno:
+    {
+      "window_days": 30,
+      "generated_at": "...Z",
+      "total_events": 1524,
+      "top": [
+        {
+          "alias": "BCash_Is_Trash",
+          "fees_sat": 12345,
+          "amount_sat": 9876543,
+          "events": 200
+        },
+        ...
+      ],
+      "low": [ ... ]
+    }
+    """
+    try:
+        # 1) Comando base para lncli
+        if RUNNING_ENVIRONMENT == 'minibolt':
+            lncli_cmd = ['lncli']
+        else:
+            lncli_cmd = [f"{UMBREL_PATH}app", "compose", "lightning", "exec", "lnd", "lncli"]
+
+        # 2) Janela de tempo em epoch (UTC)
+        now_ts = int(datetime.utcnow().timestamp())
+        start_ts = now_ts - days * 86400
+
+        # 3) Histórico de encaminhamentos
+        fh_raw = run_command(
+            lncli_cmd
+            + [
+                'fwdinghistory',
+                f'--start_time={start_ts}',
+                f'--end_time={now_ts}',
+                '--max_events=100000',
+            ],
+            timeout=20,
+        )
+        fh = json.loads(fh_raw)
+        events = fh.get("forwarding_events", []) or []
+        total_events = len(events)
+
+        if total_events == 0:
+            return {
+                "window_days": days,
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "total_events": 0,
+                "top": [],
+                "low": [],
+            }
+
+        # 4) Agrega por alias de saída (peer_alias_out)
+        peers = {}
+        for ev in events:
+            alias_raw = (ev.get("peer_alias_out") or "").strip()
+
+            # Ignora peers sem alias útil ou com mensagem de erro do LND
+            if not alias_raw:
+                continue
+            lowered = alias_raw.lower()
+            if lowered.startswith("unable to lookup peeralias"):
+                continue
+            if lowered in ("unknown", "unnamed"):
+                continue
+
+            alias = alias_raw
+            fee_msat = int(ev.get("fee_msat", "0") or "0")
+            amt_out_msat = int(ev.get("amt_out_msat", ev.get("amt_out", "0")) or "0")
+
+            p = peers.setdefault(
+                alias,
+                {
+                    "fees_msat": 0,
+                    "amt_out_msat": 0,
+                    "events": 0,
+                },
+            )
+            p["fees_msat"] += fee_msat
+            p["amt_out_msat"] += amt_out_msat
+            p["events"] += 1
+
+        # 5) Converte para lista, filtra quem tem fee > 0 e ordena
+        items = []
+        for alias, v in peers.items():
+            items.append(
+                {
+                    "alias": alias,
+                    "fees_sat": v["fees_msat"] // 1000,
+                    "amount_sat": v["amt_out_msat"] // 1000,
+                    "events": v["events"],
+                }
+            )
+
+        positive = [p for p in items if p["fees_sat"] > 0]
+        if not positive:
+            return {
+                "window_days": days,
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "total_events": total_events,
+                "top": [],
+                "low": [],
+            }
+
+        positive_sorted = sorted(positive, key=lambda x: x["fees_sat"], reverse=True)
+        top = positive_sorted[:limit]
+        low = list(reversed(positive_sorted))[:limit]
+
+        return {
+            "window_days": days,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "total_events": total_events,
+            "top": top,
+            "low": low,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# -----------------------------
 # Rotas
 # -----------------------------
 @app.route('/get-log', methods=['GET'])
@@ -409,11 +542,6 @@ def status():
     message      = read_message_from_file()
     fee_info     = get_fee_info()
 
-    # Lucro off-chain
-    profit_last_day = get_profit_last_day()
-    profit_ytd      = get_profit_year_to_date()
-
-    # Garante node_alias presente para o template mesmo em erro
     node_alias = lnd_info.get("node_alias", "N/A") if isinstance(lnd_info, dict) else "N/A"
 
     return render_template(
@@ -424,17 +552,67 @@ def status():
         node_alias=node_alias,
         message=message,
         fee_info=fee_info,
-        profit_last_day=profit_last_day,
-        profit_ytd=profit_ytd,
     )
 
-@app.route("/profit")
-def api_profit():
-    return jsonify({
-        "last_day": get_profit_last_day(),
-        "monthly": get_profit_month_summary(),
-        "year_to_date": get_profit_year_to_date()
-    })
+@app.route("/lnd-fees")
+def api_lnd_fees():
+    """
+    Exposição HTTP da base lnd_fees.sqlite (script do jvx).
+    Mantém o formato que o front espera: last_day / monthly / year_to_date.
+    """
+    try:
+        latest = fetch_daily_latest()
+        months = fetch_month_summary()
+        ytd = fetch_ytd()
+
+        last_day = None
+        if latest:
+            last_day = {
+                "date": latest[0],
+                "forwards": latest[1],
+                "rebalances": latest[2],
+                "profit": latest[3],
+            }
+
+        monthly = [
+            {
+                "month": row[0],
+                "forwards": row[1],
+                "rebalances": row[2],
+                "profit": row[3],
+            }
+            for row in (months or [])
+        ]
+
+        year_to_date = ytd[2] if ytd else 0
+
+        return jsonify({
+            "last_day": last_day,
+            "monthly": monthly,
+            "year_to_date": year_to_date,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/top-peers")
+def api_top_peers():
+    """
+    Top/bottom peers por fees de encaminhamento na janela especificada.
+    Parâmetro opcional: ?days=7|30|90 (default 30).
+    """
+    try:
+        days = int(request.args.get("days", 30))
+    except (TypeError, ValueError):
+        days = 30
+
+    # Mantém em um intervalo razoável
+    if days <= 0 or days > 365:
+        days = 30
+
+    data = get_top_forwarding_peers(days=days, limit=5)
+    if isinstance(data, dict) and data.get("error"):
+        return jsonify(data), 500
+    return jsonify(data)
 
 # -----------------------------
 # Entrypoint (HTTPS self-signed)

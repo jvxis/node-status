@@ -5,30 +5,42 @@
     <!-- Refresh page every 900 seconds (15 minutes) -->
     <meta http-equiv="refresh" content="900">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
 
     <title>{{ node_alias }} - Status</title>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
     <style>
         .small-muted{font-size:.9rem;opacity:.8}
     </style>
 </head>
+
 <body class="dark">
 <div class="container">
-    <!-- Display current time -->
+
+    <!-- Hora atual -->
     <div id="current-time" class="text-right"></div>
+
+    <!-- Marquee CoinGecko -->
     <script src="https://widgets.coingecko.com/gecko-coin-price-marquee-widget.js"></script>
-    <gecko-coin-price-marquee-widget locale="en" outlined="true" coin-ids="bitcoin,bitcoin,tether,ethereum" vs-currencies="usd,brl,xau,eur,usd"></gecko-coin-price-marquee-widget>
+    <gecko-coin-price-marquee-widget
+        locale="en"
+        outlined="true"
+        coin-ids="bitcoin,bitcoin,tether,ethereum"
+        vs-currencies="usd,brl,xau,eur,usd">
+    </gecko-coin-price-marquee-widget>
 
     <h1 class="mt-5">{{ node_alias }} - Node Status</h1>
 
     <div class="alert alert-info" role="alert">{{ message | safe }}</div>
 
-    <!-- Fees + SOURCE -->
+    <!-- Fee Info -->
     <div class="alert alert-secondary" role="alert">
         <strong>🚀 Fastest Fee: {{ fee_info.fastestFee }} sat/vB</strong> |
         🚗 Half Hour Fee: {{ fee_info.halfHourFee }} sat/vB |
@@ -46,7 +58,9 @@
             <strong>Sync Percentage:</strong>
             <span class="{% if bitcoind.sync_percentage >= 99.99 %}green{% else %}yellow{% endif %}">
                 {{ '100.00' if bitcoind.sync_percentage >= 99.99 else '%.2f' % bitcoind.sync_percentage }}%
-            </span> | <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} | <strong>Chain:</strong> {{ bitcoind.chain }}
+            </span> |
+            <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} |
+            <strong>Chain:</strong> {{ bitcoind.chain }}
         </li>
         <li class="list-group-item">
             <strong>Current Block Height:</strong> {{ bitcoind.current_block_height }} |
@@ -61,8 +75,14 @@
         <li class="list-group-item"><strong>Public Key:</strong> {{ lnd.pub_key }}</li>
         <li class="list-group-item">
             <strong>Sync Status:</strong>
-            <strong>Chain:</strong><span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_chain }}</span> |
-            <strong>Graph:</strong><span class="{% if lnd.synced_to_graph %}green{% else %}yellow{% endif %}"> {{ lnd.synced_to_graph }}</span>
+            <strong>Chain:</strong>
+            <span class="{% if lnd.synced_to_chain %}green{% else %}yellow{% endif %}">
+                {{ lnd.synced_to_chain }}
+            </span> |
+            <strong>Graph:</strong>
+            <span class="{% if lnd.synced_to_graph %}green{% else %}yellow{% endif %}">
+                {{ lnd.synced_to_graph }}
+            </span>
         </li>
         <li class="list-group-item">
             <strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis |
@@ -78,16 +98,35 @@
         <li class="list-group-item"><strong>Number of Peers:</strong> {{ lnd.number_of_peers }}</li>
     </ul>
 
-        <h3 class="mt-4 d-flex justify-content-between align-items-center">
+    <!-- Off-chain Profit Panel (jvx + lnd_fees.sqlite) -->
+    <h3 class="mt-4 d-flex justify-content-between align-items-center">
         <span>⚡ Lucro Off-Chain</span>
-        <button id="profit-refresh" class="btn btn-sm btn-outline-light" title="Atualizar lucro">
-            ↻
-        </button>
+        <button id="profit-refresh" class="btn btn-sm btn-outline-light" title="Atualizar lucro">↻</button>
     </h3>
     <ul class="list-group" id="profit-block">
         <li class="list-group-item">Carregando dados de lucro...</li>
     </ul>
 
+    <!-- Top Peers -->
+    <h3 class="mt-4 d-flex justify-content-between align-items-center">
+        <span>
+            👥 Top Peers (últimos <span id="tp-window">30</span> dias)
+        </span>
+        <div class="d-flex align-items-center">
+            <div class="btn-group btn-group-sm me-2" role="group" aria-label="Janela Top Peers">
+                <button type="button" class="btn btn-outline-light tp-range" data-days="7">7d</button>
+                <button type="button" class="btn btn-outline-light tp-range active" data-days="30">30d</button>
+                <button type="button" class="btn btn-outline-light tp-range" data-days="90">90d</button>
+            </div>
+            <button id="top-peers-refresh" class="btn btn-sm btn-outline-light" title="Atualizar ranking de peers">↻</button>
+        </div>
+    </h3>
+
+    <div class="mt-2" id="top-peers-block">
+        <div class="list-group">
+            <div class="list-group-item">Carregando ranking de peers...</div>
+        </div>
+    </div>
 
     <h2 class="mt-4">System Information</h2>
     <ul class="list-group">
@@ -101,7 +140,7 @@
         </li>
         <li class="list-group-item">
             <strong>CPU Name:</strong> {{ system_info.cpu_info['brand_raw'] }} |
-            Architecture:</strong> {{ system_info.cpu_info['arch'] }}
+            <strong>Architecture:</strong> {{ system_info.cpu_info['arch'] }}
         </li>
     </ul>
 
@@ -118,140 +157,29 @@
         {% endfor %}
     </ul>
 
-    <h3 class="mt-4">Disks Sensor Temperatures</h3>
-    <ul class="list-group">
-        {% for chip, label, temp in system_info.sensor_temperatures %}
-        <li class="list-group-item">
-            <strong>Chip:</strong> {{ chip }},
-            <strong>Label:</strong> {{ label }},
-            <strong>Temperature:</strong>
-            <span class="{% if temp > 70 %}red{% elif temp > 50 %}yellow{% else %}green{% endif %}">
-                {{ temp }}°C
-            </span>
-        </li>
-        {% endfor %}
-    </ul>
 </div>
 
-<!-- Theme switch Button -->
+<!-- Buttons -->
 <button class="theme-switch btn btn-primary">Toggle Theme</button>
-<!-- Payment Button -->
 <button class="pay-invoice btn btn-primary">Pay Invoice</button>
-<!-- New Invoice Button -->
 <button class="new-invoice btn btn-primary">New Invoice</button>
-<!-- LND logs Button -->
 <button class="lnd-logs btn btn-primary">LND Logs</button>
 
-<!-- Payment Modal -->
-<div id="payment-modal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pay Lightning Invoice</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Enter Lightning Invoice or scan QR Code:</p>
-                <input type="text" id="invoice-input" class="form-control" placeholder="Paste Lightning Invoice here">
+<!-- Modais e demais templates -->
+{% include 'message.txt' %}
 
-                <!-- QR code scanner area (this will be hidden unless on mobile) -->
-                <div id="qr-code-scanner" style="width: 100%; height: 400px; display: none;">
-                    <canvas id="qr-canvas" style="width: 100%; height: 150%;"></canvas>
-                </div>
-
-                <button id="qr-code-scan" class="btn btn-secondary mt-2">Scan QR Code (Mobile Only)</button>
-
-                <div id="invoice-details" class="mt-3">
-                    <p><strong>Amount:</strong> <span id="invoice-amount"></span> satoshis</p>
-                    <p><strong>Message:</strong> <span id="invoice-message"></span></p>
-                </div>
-
-                <div id="loading-spinner" style="display:none;">
-                    <p>Loading... <span class="spinner-border"></span></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="confirm-payment" class="btn btn-success">Confirm Payment</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- New Invoice Modal -->
-<div id="new-invoice-modal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Generate Lightning Invoice</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Enter the amount in SATS and an optional message for the invoice:</p>
-                <input type="number" id="new-invoice-amount" class="form-control" placeholder="Amount in SATS" min="1" required>
-                <input type="text" id="new-invoice-message" class="form-control mt-2" placeholder="Optional Message">
-
-                <div id="loading-invoice" style="display:none;">
-                    <p>Generating invoice... <span class="spinner-border"></span></p>
-                </div>
-
-                <div id="generated-invoice" class="mt-3" style="display:none;">
-                    <p><strong>Payment Request:</strong></p>
-                    <div id="payment-request-container">
-                        <span id="payment-request"></span>
-                        <button id="copy-payment-request" class="btn btn-sm btn-secondary ml-2">Copy</button>
-                    </div>
-                    <br>
-                    <div id="qr-code-invoice"></div>
-                    <p><strong>Expires in:</strong> <span id="invoice-expiry"></span> minutes <span id="invoice-seconds"></span> seconds</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" id="confirm-invoice" class="btn btn-success">Generate Invoice</button>
-                <button type="button" id="cancel-invoice-btn" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- LND Logs Modal -->
-<div id="lnd-logs-modal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">LND Logs</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <pre id="log-output"></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="close-log-btn" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- JavaScript dependencies -->
+<!-- JS libs -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-    const themeSwitch = document.querySelector('.theme-switch');
-    const body = document.querySelector('body');
-    const payInvoice = document.querySelector('.pay-invoice')
-    const newInvoiceBtn = document.querySelector('.new-invoice');
-    const confirmInvoiceBtn = document.getElementById('confirm-invoice');
-
+/* ===========================
+   THEME SWITCH
+=========================== */
+const themeSwitch = document.querySelector('.theme-switch');
+const body = document.querySelector('body');
+if (themeSwitch) {
     themeSwitch.addEventListener('click', () => {
         if (body.classList.contains('dark')) {
             body.classList.remove('dark');
@@ -261,382 +189,240 @@
             body.classList.add('dark');
         }
     });
+}
 
-    payInvoice.addEventListener('click', () => {
-        $('#payment-modal').modal('show');
-    });
+/* ===========================
+   ⚡ OFF-CHAIN PROFIT (jvx)
+=========================== */
+(function () {
+    const block = document.getElementById('profit-block');
+    const btn   = document.getElementById('profit-refresh');
+    if (!block) return;
 
-    document.getElementById('invoice-input').addEventListener('input', async () => {
-        const invoice = document.getElementById('invoice-input').value;
-        if (invoice) {
-            document.getElementById('loading-spinner').style.display = 'block';
-            try {
-                const response = await fetch('/decode-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pay_req: invoice })
-                });
-                const data = await response.json();
-                document.getElementById('invoice-amount').textContent = data.amount || 'N/A';
-                document.getElementById('invoice-message').textContent = data.message || 'No message';
-            } catch (error) {
-                alert('Failed to decode the invoice. Please check the input.');
-            } finally {
-                document.getElementById('loading-spinner').style.display = 'none';
-            }
-        }
-    });
-
-    document.getElementById('confirm-payment').addEventListener('click', async () => {
-        const invoice = document.getElementById('invoice-input').value;
-        if (invoice) {
-            document.getElementById('loading-spinner').style.display = 'block';
-            try {
-                const response = await fetch('/pay-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pay_req: invoice })
-                });
-                const data = await response.json();
-                alert(data.success ? 'Payment successful!' : 'Payment failed.');
-            } catch (error) {
-                alert('Failed to pay the invoice.');
-            } finally {
-                document.getElementById('loading-spinner').style.display = 'none';
-                $('#payment-modal').modal('hide');
-            }
-        }
-    });
-
-    // QR code scanning logic
-    document.getElementById('qr-code-scan').addEventListener('click', () => {
-        const qrScannerElement = document.getElementById('qr-code-scanner');
-        const qrCanvas = document.getElementById('qr-canvas');
-        const qrContext = qrCanvas.getContext('2d');
-        const width = 300;
-        const height = 400;
-
-        qrCanvas.width = width;
-        qrCanvas.height = height;
-        qrScannerElement.style.display = 'block';
-
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then((stream) => {
-                    const videoElement = document.createElement('video');
-                    videoElement.setAttribute('autoplay', '');
-                    videoElement.setAttribute('playsinline', '');
-                    videoElement.style.display = 'none';
-                    document.body.appendChild(videoElement);
-                    videoElement.srcObject = stream;
-
-                    function scanQR() {
-                        qrContext.drawImage(videoElement, 0, 0, width, height);
-                        const imageData = qrContext.getImageData(0, 0, width, height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-                        if (code) {
-                            let scannedData = code.data;
-                            const colonIndex = scannedData.indexOf(':');
-                            if (colonIndex !== -1) {
-                                scannedData = scannedData.substring(colonIndex + 1);
-                            }
-                            scannedData = scannedData.toLowerCase();
-                            const invoiceInput = document.getElementById('invoice-input');
-                            invoiceInput.value = scannedData;
-                            const event = new Event('input', { bubbles: true });
-                            invoiceInput.dispatchEvent(event);
-                            stream.getTracks().forEach(track => track.stop());
-                            videoElement.remove();
-                            qrScannerElement.style.display = 'none';
-                        } else {
-                            requestAnimationFrame(scanQR);
-                        }
-                    }
-                    requestAnimationFrame(scanQR);
-                })
-                .catch(() => { alert("Please allow camera access to scan the QR code."); });
-        } else {
-            alert('QR Code scanning is only available on mobile devices.');
-        }
-    });
-
-    // ------- New Invoice / Countdown -------`
-    let countdownInterval = null;
-    let paymentCheckInterval = null;
-
-    async function handleInvoiceGeneration() {
-        const amountInputElement = document.getElementById('new-invoice-amount');
-        const amountInput = amountInputElement ? amountInputElement.value : null;
-
-        const message = document.getElementById('new-invoice-message').value || '';
-        if (isNaN(amountInput) || amountInput <= 0) {
-            alert("Please enter a valid amount greater than 0.");
-            return;
-        }
-
-        const amount = parseInt(amountInput, 10);
-        document.getElementById('loading-invoice').style.display = 'block';
-
-        try {
-            const response = await fetch('/generate-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, message })
-            });
-
-            if (!response.ok) throw new Error(`Failed to generate invoice. Status: ${response.status}`);
-
-            const data = await response.json();
-
-            if (data.error) {
-                alert(`Error: ${data.error}`);
-            } else {
-                document.getElementById('generated-invoice').style.display = 'block';
-                document.getElementById('payment-request').textContent = data.payment_request;
-                const qrCodeContainer = document.getElementById('qr-code-invoice');
-                generateQRCode(qrCodeContainer, data.payment_request);
-                startCountdown(600, data.r_hash);
-            }
-        } catch (error) {
-            alert('Failed to generate the invoice. Check console for more details.');
-        } finally {
-            document.getElementById('loading-invoice').style.display = 'none';
-        }
+    function fmtPlain(v) {
+        return Number(v || 0).toLocaleString('pt-BR');
+    }
+    function fmtColored(v) {
+        const n = Number(v || 0);
+        return `<span class="${n >= 0 ? 'text-success' : 'text-danger'}">${fmtPlain(n)} sats</span>`;
+    }
+    function fmtMonth(m) {
+        if (!m) return '';
+        const [y, M] = m.split('-');
+        return `${M}/${y}`;
     }
 
-    function resetModal() {
-        document.getElementById('new-invoice-amount').value = '';
-        document.getElementById('new-invoice-message').value = '';
-        document.getElementById('generated-invoice').style.display = 'none';
-        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-        if (paymentCheckInterval) { clearInterval(paymentCheckInterval); paymentCheckInterval = null; }
-    }
-
-    newInvoiceBtn.addEventListener('click', () => { $('#new-invoice-modal').modal('show'); });
-
-    $('#new-invoice-modal').on('shown.bs.modal', function () {
-        resetModal();
-        confirmInvoiceBtn.removeEventListener('click', handleInvoiceGeneration);
-        confirmInvoiceBtn.addEventListener('click', handleInvoiceGeneration);
-    });
-
-    document.querySelector('#cancel-invoice-btn').addEventListener('click', () => {
-        resetModal();
-        $('#new-invoice-modal').modal('hide');
-    });
-
-    document.getElementById('copy-payment-request').addEventListener('click', () => {
-        const paymentRequest = document.getElementById('payment-request').textContent;
-        navigator.clipboard.writeText(paymentRequest).catch(err => { console.error("Failed to copy payment request: ", err); });
-    });
-
-    function generateQRCode(element, data) {
-        element.innerHTML = '';
-        new QRCode(element, {
-            text: data,
-            width: 300,
-            height: 300,
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    }
-
-    function startCountdown(seconds, rHash) {
-        let remaining = seconds;
-        let checkInterval = 30;
-
-        document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
-        document.getElementById('invoice-seconds').textContent = remaining % 60;
-
-        countdownInterval = setInterval(() => {
-            remaining -= 1;
-            if (remaining <= 0) {
-                clearInterval(countdownInterval);
-                clearInterval(paymentCheckInterval);
-                alert("Invoice expired. Please generate another one.");
-                $('#new-invoice-modal').modal('hide');
-                return;
-            }
-            document.getElementById('invoice-expiry').textContent = Math.floor(remaining / 60);
-            document.getElementById('invoice-seconds').textContent = remaining % 60;
-
-            if (remaining % checkInterval === 0) { checkPayment(rHash); }
-        }, 1000);
-    }
-
-    async function checkPayment(rHash) {
-        try {
-            const response = await fetch(`/check-payment?r_hash=${rHash}`);
-            const paymentData = await response.json();
-            if (paymentData.settled) {
-                const memo = paymentData.message;
-                alert(`Payment Done! Amount: ${paymentData.amount}, Message: ${memo}`);
-                clearInterval(countdownInterval);
-                clearInterval(paymentCheckInterval);
-                $('#new-invoice-modal').modal('hide');
-            }
-        } catch (error) {
-            console.error("Error checking payment status:", error);
-            if (error.message && error.message.includes('unable to locate invoice')) {
-                clearInterval(countdownInterval);
-                clearInterval(paymentCheckInterval);
-                alert('Invoice no longer exists. Closing modal.');
-                $('#new-invoice-modal').modal('hide');
-            }
-        }
-    }
-
-    // LND Logs polling
-    const logOutput = document.getElementById('log-output');
-    let pollInterval = null;
-
-    async function fetchLogs(lines = 20) {
-        try {
-            const response = await fetch(`/get-log?lines=${lines}`);
-            const data = await response.json();
-            if (data.logs) {
-                logOutput.textContent += data.logs;
-                logOutput.scrollTop = logOutput.scrollHeight;
-            } else if (data.error) {
-                console.error("Error fetching logs:", data.error);
-            }
-        } catch (error) {
-            console.error('Error fetching logs:', error);
-        }
-    }
-
-    function startPollingLogs() {
-        fetchLogs();
-        pollInterval = setInterval(() => { fetchLogs(); }, 3000);
-    }
-
-    function stopPollingLogs() {
-        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-    }
-
-    document.querySelector('.lnd-logs').addEventListener('click', () => {
-        $('#lnd-logs-modal').modal('show');
-        startPollingLogs();
-    });
-
-    document.getElementById('close-log-btn').addEventListener('click', () => { stopPollingLogs(); });
-    $('#lnd-logs-modal').on('hidden.bs.modal', function () { stopPollingLogs(); });
-
-    // ------- Lucro Off-Chain (AJAX + refresh) -------
     async function loadProfit() {
-        const block = document.getElementById('profit-block');
-        if (!block) return;
-
         try {
-            const resp = await fetch('/profit');
-            const data = await resp.json();
-            const last = data.last_day || null;
-            const monthly = data.monthly || [];
-            const ytd = data.year_to_date || 0;
+            block.innerHTML = `<li class="list-group-item">Carregando...</li>`;
+            const res = await fetch('/lnd-fees');
+            const data = await res.json();
 
-            function fmt(n) {
-                if (typeof n !== 'number') return n;
-                return n.toLocaleString('pt-BR'); // separador de milhar estilo BR
+            if (!res.ok || data.error) {
+                throw new Error(data.error || `HTTP ${res.status}`);
             }
 
-            // indexa meses por "YYYY-MM"
-            const byMonth = {};
-            monthly.forEach(m => {
-                if (m && m.month) {
-                    byMonth[m.month] = m;
-                }
-            });
-
-            const now = new Date();
-            const ymCurrent = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const ymPrev = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+            const last = data.last_day || null;
+            const monthly = Array.isArray(data.monthly) ? data.monthly : [];
+            const ytd = Number(data.year_to_date || 0);
 
             let html = '';
 
-            // ----- Bloco diário -----
-            if (last) {
-                let d = last.date;
-                let dbr = d;
-                if (d && d.length === 10) {
-                    // de YYYY-MM-DD para DD/MM/YYYY
-                    dbr = d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4);
-                }
-                const cls = last.profit >= 0 ? 'text-success' : 'text-danger';
-                html += `<li class="list-group-item"><strong>Ontem (${dbr}):</strong> <span class="${cls}">${fmt(last.profit)} sats</span></li>`;
-                html += `<li class="list-group-item">Fees encaminhamento: ${fmt(last.forwards)} sats</li>`;
-                html += `<li class="list-group-item">Custo de rebalance: ${fmt(last.rebalances)} sats</li>`;
-            } else {
-                html += `<li class="list-group-item">Nenhum dado diário disponível.</li>`;
+            if (last && last.date) {
+                const [yy, mm, dd] = last.date.split('-');
+                html += `<li class="list-group-item"><strong>Ontem (${dd}/${mm}/${yy}):</strong> ${fmtColored(last.profit)}</li>`;
+                html += `<li class="list-group-item">Fees encaminhamento: ${fmtPlain(last.forwards)} sats</li>`;
+                html += `<li class="list-group-item">Custo de rebalance: ${fmtPlain(last.rebalances)} sats</li>`;
             }
 
-            // ----- Comparativo mensal (mês atual x mês anterior) -----
-            const curMonthData  = byMonth[ymCurrent];
-            const prevMonthData = byMonth[ymPrev];
+            const len = monthly.length;
+            const cur = len >= 1 ? monthly[len - 1] : null;
+            const prev = len >= 2 ? monthly[len - 2] : null;
+            const others = len > 2 ? monthly.slice(Math.max(0, len - 5), len - 2) : [];
 
-            if (curMonthData || prevMonthData) {
-                html += `<li class="list-group-item"><strong>Comparativo mensal:</strong></li>`;
-
-                if (curMonthData) {
-                    const cls = curMonthData.profit >= 0 ? 'text-success' : 'text-danger';
-                    html += `<li class="list-group-item pl-4">Mês atual (${ymCurrent}): <span class="${cls}">${fmt(curMonthData.profit)} sats</span> (fees=${fmt(curMonthData.forwards)}, rebalance=${fmt(curMonthData.rebalances)})</li>`;
-                } else {
-                    html += `<li class="list-group-item pl-4">Mês atual: sem dados.</li>`;
-                }
-
-                if (prevMonthData) {
-                    const cls = prevMonthData.profit >= 0 ? 'text-success' : 'text-danger';
-                    html += `<li class="list-group-item pl-4">Mês anterior (${ymPrev}): <span class="${cls}">${fmt(prevMonthData.profit)} sats</span> (fees=${fmt(prevMonthData.forwards)}, rebalance=${fmt(prevMonthData.rebalances)})</li>`;
-                } else {
-                    html += `<li class="list-group-item pl-4">Mês anterior: sem dados.</li>`;
-                }
+            html += `<li class="list-group-item"><strong>Comparativo mensal:</strong></li>`;
+            if (cur) {
+                html += `<li class="list-group-item">
+                    Mês atual (${fmtMonth(cur.month)}):
+                    ${fmtColored(cur.profit)}
+                    (fees=${fmtPlain(cur.forwards)}, rebalance=${fmtPlain(cur.rebalances)})
+                </li>`;
+            }
+            if (prev) {
+                html += `<li class="list-group-item">
+                    Mês anterior (${fmtMonth(prev.month)}):
+                    ${fmtColored(prev.profit)}
+                    (fees=${fmtPlain(prev.forwards)}, rebalance=${fmtPlain(prev.rebalances)})
+                </li>`;
             }
 
-            // ----- Resumo últimos meses (sem repetir atual/anterior) -----
-            const last3 = monthly
-                .filter(m => m && m.month !== ymCurrent && m.month !== ymPrev)
-                .slice(-3);
-
-            if (last3.length > 0) {
+            if (others.length) {
                 html += `<li class="list-group-item"><strong>Resumo últimos meses (exceto atual/anterior):</strong></li>`;
-                last3.forEach(m => {
-                    const cls = m.profit >= 0 ? 'text-success' : 'text-danger';
-                    html += `<li class="list-group-item pl-4">• ${m.month}: <span class="${cls}">${fmt(m.profit)} sats</span> (fees=${fmt(m.forwards)}, rebalance=${fmt(m.rebalances)})</li>`;
+                others.slice(-3).forEach(m => {
+                    html += `<li class="list-group-item">
+                        • ${fmtMonth(m.month)}:
+                        ${fmtColored(m.profit)}
+                        (fees=${fmtPlain(m.forwards)}, rebalance=${fmtPlain(m.rebalances)})
+                    </li>`;
                 });
             }
 
-            // ----- YTD -----
-            html += `<li class="list-group-item"><strong>Lucro acumulado no ano (YTD):</strong> ${fmt(ytd)} sats</li>`;
-
+            html += `<li class="list-group-item"><strong>Lucro acumulado no ano (YTD):</strong> ${fmtColored(ytd)}</li>`;
             block.innerHTML = html;
-
         } catch (e) {
             console.error('Erro ao carregar lucro off-chain:', e);
             block.innerHTML = `<li class="list-group-item text-danger">Erro ao carregar lucro off-chain.</li>`;
         }
     }
 
-    const profitRefreshBtn = document.getElementById('profit-refresh');
-    if (profitRefreshBtn) {
-        profitRefreshBtn.addEventListener('click', () => {
-            profitRefreshBtn.disabled = true;
-            loadProfit().finally(() => {
-                profitRefreshBtn.disabled = false;
-            });
+    loadProfit();
+    if (btn) {
+        btn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            btn.disabled = true;
+            loadProfit().finally(() => { btn.disabled = false; });
         });
     }
-    // carrega uma vez ao abrir a página
-    loadProfit();
+})();
 
+/* ===========================
+   👥 TOP PEERS (FORWARDS)
+=========================== */
+(function () {
+    const block = document.getElementById('top-peers-block');
+    const btn   = document.getElementById('top-peers-refresh');
+    const windowSpan = document.getElementById('tp-window');
+    const rangeButtons = document.querySelectorAll('.tp-range');
 
-    // Clock
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
+    if (!block) return;
+
+    function fmt(n) {
+        return Number(n || 0).toLocaleString('pt-BR');
     }
-    updateTime();
-    setInterval(updateTime, 1000);
+
+    let currentDays = 30;
+
+    async function loadTopPeers(days) {
+        try {
+            block.innerHTML = `
+                <div class="list-group">
+                    <div class="list-group-item">Carregando ranking de peers...</div>
+                </div>`;
+
+            const res = await fetch(`/top-peers?days=${days}`);
+            const data = await res.json();
+
+            if (windowSpan) {
+                windowSpan.textContent = data.window_days || days;
+            }
+
+            if (!res.ok || data.error) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+            }
+
+            const windowDays = data.window_days || days;
+            const top = Array.isArray(data.top) ? data.top : [];
+            const low = Array.isArray(data.low) ? data.low : [];
+
+            if (!top.length && !low.length) {
+                block.innerHTML = `
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <strong>Janela analisada:</strong> últimos ${windowDays} dias.
+                        </div>
+                        <div class="list-group-item">
+                            Sem eventos de encaminhamento no período.
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            const topList = top.map((p, idx) => `
+                <li>
+                    <strong>${idx + 1}. ${p.alias}</strong> — fees:
+                    ${fmt(p.fees_sat)} sats,
+                    volume roteado: ${fmt(p.amount_sat)} sats
+                    (encaminhamentos: ${fmt(p.events)})
+                </li>`).join('');
+
+            const lowList = low.map((p, idx) => `
+                <li>
+                    <strong>${idx + 1}. ${p.alias}</strong> — fees:
+                    ${fmt(p.fees_sat)} sats,
+                    volume roteado: ${fmt(p.amount_sat)} sats
+                    (encaminhamentos: ${fmt(p.events)})
+                </li>`).join('');
+
+            block.innerHTML = `
+                <div class="list-group">
+                    <div class="list-group-item">
+                        <p class="mb-1">
+                            <strong>Janela analisada:</strong> últimos ${windowDays} dias.
+                        </p>
+                    </div>
+                    <div class="list-group-item">
+                        <p class="mb-1">
+                            <strong>Top 5 peers por fee recebida:</strong>
+                        </p>
+                        <ol class="mb-0">
+                            ${topList}
+                        </ol>
+                    </div>
+                    <div class="list-group-item">
+                        <p class="mb-1">
+                            <strong>5 peers que menos geraram fee no período (entre os ativos):</strong>
+                        </p>
+                        <ol class="mb-0">
+                            ${lowList}
+                        </ol>
+                    </div>
+                </div>`;
+        } catch (e) {
+            console.error('Erro ao carregar top peers:', e);
+            block.innerHTML = `
+                <div class="list-group">
+                    <div class="list-group-item text-danger">
+                        Erro ao carregar ranking de peers: ${e}
+                    </div>
+                </div>`;
+        }
+    }
+
+    // Inicializa com 30 dias
+    loadTopPeers(currentDays);
+
+    // Botões 7d / 30d / 90d
+    rangeButtons.forEach(btnRange => {
+        btnRange.addEventListener('click', () => {
+            rangeButtons.forEach(b => b.classList.remove('active'));
+            btnRange.classList.add('active');
+
+            const days = parseInt(btnRange.dataset.days, 10) || 30;
+            currentDays = days;
+            loadTopPeers(days);
+        });
+    });
+
+    // Botão de refresh manual
+    if (btn) {
+        btn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            btn.disabled = true;
+            loadTopPeers(currentDays).finally(() => { btn.disabled = false; });
+        });
+    }
+})();
+
+/* ===========================
+   CLOCK
+=========================== */
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById('current-time').textContent = `Current Time: ${timeString}`;
+}
+updateTime();
+setInterval(updateTime, 1000);
 </script>
 
 </body>
