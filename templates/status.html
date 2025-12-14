@@ -56,9 +56,14 @@
     <ul class="list-group">
         <li class="list-group-item">
             <strong>Sync Percentage:</strong>
-            <span class="{% if bitcoind.sync_percentage >= 99.99 %}green{% else %}yellow{% endif %}">
-                {{ '100.00' if bitcoind.sync_percentage >= 99.99 else '%.2f' % bitcoind.sync_percentage }}%
-            </span> |
+            {% if bitcoind.sync_percentage is not none %}
+                <span class="{% if bitcoind.sync_percentage >= 99.99 %}green{% else %}yellow{% endif %}">
+                    {{ '100.00' if bitcoind.sync_percentage >= 99.99 else '%.2f' % bitcoind.sync_percentage }}%
+                </span>
+            {% else %}
+                <span class="red">N/A</span>
+            {% endif %}
+            |
             <strong>Version:</strong> {{ bitcoind.version }} - {{ bitcoind.subversion }} |
             <strong>Chain:</strong> {{ bitcoind.chain }}
         </li>
@@ -84,11 +89,31 @@
                 {{ lnd.synced_to_graph }}
             </span>
         </li>
+
+        <!-- Balances (robusto para None) -->
         <li class="list-group-item">
-            <strong>Total Balance:</strong> {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis |
-            <strong>Wallet Balance:</strong> {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis |
-            <strong>Channels Balance:</strong> {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis
+            <strong>Total Balance:</strong>
+            {% if lnd.total_balance is not none %}
+                {{ '{:,.0f}'.format(lnd.total_balance) }} satoshis
+            {% else %}
+                N/A
+            {% endif %}
+            |
+            <strong>Wallet Balance:</strong>
+            {% if lnd.wallet_balance is not none %}
+                {{ '{:,.0f}'.format(lnd.wallet_balance) }} satoshis
+            {% else %}
+                N/A
+            {% endif %}
+            |
+            <strong>Channels Balance:</strong>
+            {% if lnd.channel_balance is not none %}
+                {{ '{:,.0f}'.format(lnd.channel_balance) }} satoshis
+            {% else %}
+                N/A
+            {% endif %}
         </li>
+
         <li class="list-group-item"><strong>Number of Channels:</strong> {{ lnd.number_of_channels }}</li>
         <li class="list-group-item">
             <strong>Number of Active Channels:</strong> {{ lnd.num_active_channels }} |
@@ -133,9 +158,14 @@
         <li class="list-group-item">
             <strong>CPU Usage:</strong> {{ system_info.cpu_usage }}% |
             <strong>CPU Temp:</strong>
-            <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
-                {{ system_info.cpu_temp }} °C
-            </span> |
+            {% if system_info.cpu_temp is not none %}
+                <span class="{% if system_info.cpu_temp > 85 %}red{% elif system_info.cpu_temp > 65 %}yellow{% else %}green{% endif %}">
+                    {{ system_info.cpu_temp }} °C
+                </span>
+            {% else %}
+                <span class="yellow">N/A</span>
+            {% endif %}
+            |
             <strong>Memory Usage:</strong> {{ system_info.memory_usage }}%
         </li>
         <li class="list-group-item">
@@ -228,11 +258,23 @@ if (themeSwitch) {
 
             let html = '';
 
-            if (last && last.date) {
-                const [yy, mm, dd] = last.date.split('-');
-                html += `<li class="list-group-item"><strong>Ontem (${dd}/${mm}/${yy}):</strong> ${fmtColored(last.profit)}</li>`;
+            if (last && (last.date || last.date_br)) {
+                // Preferir o que o backend já calculou (label + dd/mm/aaaa)
+                const label = last.label || 'Último dia no DB';
+
+                // date_br vem do backend; se não existir, cai para conversão do YYYY-MM-DD
+                let dateBR = last.date_br;
+                if (!dateBR && last.date) {
+                    const [yy, mm, dd] = String(last.date).split('-');
+                    if (yy && mm && dd) dateBR = `${dd}/${mm}/${yy}`;
+                }
+                if (!dateBR) dateBR = 'N/A';
+
+                html += `<li class="list-group-item"><strong>${label} (${dateBR}):</strong> ${fmtColored(last.profit)}</li>`;
                 html += `<li class="list-group-item">Fees encaminhamento: ${fmtPlain(last.forwards)} sats</li>`;
                 html += `<li class="list-group-item">Custo de rebalance: ${fmtPlain(last.rebalances)} sats</li>`;
+            } else {
+                html += `<li class="list-group-item"><strong>Último dia no DB:</strong> N/A</li>`;
             }
 
             const len = monthly.length;
