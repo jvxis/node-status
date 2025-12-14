@@ -1,6 +1,3 @@
-import sqlite3
-from datetime import datetime
-import time
 import configparser
 from flask import Flask, render_template, request, jsonify
 import subprocess
@@ -13,6 +10,8 @@ from collections import defaultdict
 import markdown
 import os
 import shutil
+from datetime import datetime, timedelta, date
+from zoneinfo import ZoneInfo
 
 # para usar o viewer do lnd_fees.sqlite (jvx)
 from lnd_fees_view import fetch_daily_latest, fetch_month_summary, fetch_ytd
@@ -22,7 +21,7 @@ from lnd_fees_view import fetch_daily_latest, fetch_month_summary, fetch_ytd
 # -----------------------------
 config = configparser.ConfigParser()
 # lê a partir do diretório atual (WorkingDirectory deve ser /home/admin/node-status)
-config.read('node-status.config')
+config.read(['node-status.config', 'node-status.local.config'])
 
 RUNNING_ENVIRONMENT = config.get('settings', 'RUNNING_ENVIRONMENT', fallback='minibolt')
 RUNNING_BITCOIN     = config.get('settings', 'RUNNING_BITCOIN',     fallback='external')
@@ -559,16 +558,42 @@ def api_lnd_fees():
     """
     Exposição HTTP da base lnd_fees.sqlite (script do jvx).
     Mantém o formato que o front espera: last_day / monthly / year_to_date.
+    Agora também inclui label/date_br para não rotular errado quando o DB estiver atrasado ou em outro timezone.
     """
     try:
         latest = fetch_daily_latest()
         months = fetch_month_summary()
         ytd = fetch_ytd()
 
+        # timezone local (ajuste se quiser outro)
+        TZ = ZoneInfo("America/Sao_Paulo")
+        today_local = datetime.now(TZ).date()
+        yesterday_local = today_local - timedelta(days=1)
+
         last_day = None
         if latest:
+            db_date_raw = latest[0]
+
+            # Normaliza a data do SQLite para um date()
+            if isinstance(db_date_raw, datetime):
+                db_date = db_date_raw.date()
+            elif isinstance(db_date_raw, date):
+                db_date = db_date_raw
+            else:
+                # normalmente vem 'YYYY-MM-DD'
+                db_date = datetime.strptime(str(db_date_raw), "%Y-%m-%d").date()
+
+            if db_date == today_local:
+                label = "Hoje"
+            elif db_date == yesterday_local:
+                label = "Ontem"
+            else:
+                label = "Último dia no DB"
+
             last_day = {
-                "date": latest[0],
+                "date": str(db_date),                 # mantém compatibilidade (YYYY-MM-DD)
+                "date_br": db_date.strftime("%d/%m/%Y"),
+                "label": label,
                 "forwards": latest[1],
                 "rebalances": latest[2],
                 "profit": latest[3],
